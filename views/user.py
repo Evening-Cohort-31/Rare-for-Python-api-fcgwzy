@@ -78,6 +78,7 @@ def get_all_users(query_params):
         # We join the tables so we get names/prices instead of just ID numbers
         db_cursor.execute("""
             SELECT
+                u.id,
                 u.first_name,
                 u.last_name,
                 u.email,
@@ -97,3 +98,24 @@ def get_all_users(query_params):
             users.append(dict(row))
 
         return json.dumps(users)
+
+def get_single_user(user_data):
+    with sqlite3.connect("./db.sqlite3") as conn:
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
+
+        # Use a ? as a placeholder to prevent SQL injection
+        db_cursor.execute(""" 
+            SELECT
+                u.id,
+                u.email
+            FROM Users u
+            WHERE u.email = ?
+            """, (user_data['email'],))
+        
+        data = db_cursor.fetchone()
+
+        if data:
+            return json.dumps(dict(data))
+        
+        return None

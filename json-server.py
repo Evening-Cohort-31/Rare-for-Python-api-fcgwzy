@@ -2,8 +2,7 @@ import json
 from http.server import HTTPServer
 from nss_handler import HandleRequests, status
 
-from views import create_user, login_user, get_all_users
-
+from views import create_user, login_user, get_all_users, get_single_user
 
 class JSONServer(HandleRequests):
     """Server class to handle incoming HTTP requests for shipping ships"""
@@ -21,6 +20,7 @@ class JSONServer(HandleRequests):
                 # Gets the requested order by the id
                 response_body = get_all_users(query_params)
                 return self.response(response_body, status.HTTP_200_SUCCESS.value)
+            
 
             response_body = get_all_users(query_params)
             return self.response(response_body, status.HTTP_200_SUCCESS.value)
@@ -54,8 +54,17 @@ class JSONServer(HandleRequests):
 
         if resource == "register":
             response_json = create_user(request_body)
-
             return self.response(response_json, status.HTTP_201_SUCCESS_CREATED.value)
+        
+        if resource == "login":
+            authenticated_user = login_user(request_body)
+
+            if authenticated_user:
+                return self.response(authenticated_user, status.HTTP_200_SUCCESS.value)
+            else:
+                # If no user found, return a 400 or 401
+                return self.response("Invalid email", status.HTTP_400_CLIENT_ERROR_BAD_REQUEST_DATA.value)
+                    
 
         return self.response(
             "Requested resource not found",
