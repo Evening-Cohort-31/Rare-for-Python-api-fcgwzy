@@ -69,3 +69,31 @@ def create_user(user):
             'token': id,
             'valid': True
         })
+
+def get_all_users(query_params):
+    with sqlite3.connect("./db.sqlite3") as conn:
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
+
+        # We join the tables so we get names/prices instead of just ID numbers
+        db_cursor.execute("""
+            SELECT
+                u.first_name,
+                u.last_name,
+                u.email,
+                u.username,
+                u.password,
+                u.bio,
+                u.created_on,
+                u.active
+            FROM Users u               
+        """)
+
+        query_results = db_cursor.fetchall()
+
+        users = []
+
+        for row in query_results:
+            users.append(dict(row))
+
+        return json.dumps(users)
