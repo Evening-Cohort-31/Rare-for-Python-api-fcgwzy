@@ -3,6 +3,7 @@ from http.server import HTTPServer
 from nss_handler import HandleRequests, status
 
 from views import create_user, login_user, get_all_users, get_single_user
+from views import create_post, get_all_posts, get_single_users_post
 
 class JSONServer(HandleRequests):
     """Server class to handle incoming HTTP requests for shipping ships"""
@@ -24,6 +25,17 @@ class JSONServer(HandleRequests):
 
             response_body = get_all_users(query_params)
             return self.response(response_body, status.HTTP_200_SUCCESS.value)
+        
+        elif url["requested_resource"].lower() == "posts":
+            if url["pk"] != 0:
+                # Gets the requested order by the id
+                response_body = get_single_users_post(query_params)
+                return self.response(response_body, status.HTTP_200_SUCCESS.value)
+            
+
+            response_body = get_single_users_post(query_params)
+            return self.response(response_body, status.HTTP_200_SUCCESS.value)
+        
 
         else:
             return self.response("Resource not found", status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND.value)
