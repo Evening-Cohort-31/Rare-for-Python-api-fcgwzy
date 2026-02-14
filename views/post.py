@@ -16,7 +16,7 @@ def create_post(post):
         db_cursor = conn.cursor()
 
         db_cursor.execute("""
-        Insert into Posts (user_id, category_id, title, publication_date, image_url, content, approved) values (?, ?, ?, ?, ?, ?, ?, 1)
+        Insert into Posts (user_id, category_id, title, publication_date, image_url, content, approved) values (?, ?, ?, ?, ?, ?, ?)
         """, (
             post['user_id'],
             post['category_id'],
@@ -35,7 +35,7 @@ def create_post(post):
             'valid': True
         })
 
-def get_all_posts(query_params):
+def get_all_posts():
     with sqlite3.connect("./db.sqlite3") as conn:
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
@@ -56,22 +56,27 @@ def get_all_posts(query_params):
 
         return json.dumps(posts)
 
-def get_single_users_post(post_data):
+def get_single_users_post(user_id): # Pass the ID directly, not a dict
     with sqlite3.connect("./db.sqlite3") as conn:
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
 
-        # Use a ? as a placeholder to prevent SQL injection
         db_cursor.execute(""" 
             SELECT
-                *
+                p.id,
+                p.user_id,
+                p.title,
+                p.publication_date,
+                p.content,
+                u.first_name,
+                u.last_name,
+                u.username
             FROM Posts p
-            WHERE p.user_id = ?
-            """, (post_data['user_id'],))
+            JOIN Users u ON p.user_id = u.id
+            WHERE p.user_id = ?;
+            """, (user_id,))
         
-        data = db_cursor.fetchone()
-
-        if data:
-            return json.dumps(dict(data))
+        dataset = db_cursor.fetchall()
+        posts = [dict(row) for row in dataset] # Convert all rows to dicts
         
-        return None
+        return json.dumps(posts)

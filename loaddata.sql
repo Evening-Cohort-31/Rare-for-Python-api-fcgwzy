@@ -91,3 +91,4 @@ INSERT INTO Reactions ('label', 'image_url') VALUES ('happy', 'https://pngtree.c
 INSERT INTO Posts (user_id, category_id, title, publication_date, image_url, content, approved)
 VALUES (1, 1, 'My First Post', '2024-02-14', 'https://example.com/image.jpg', 'This is the content of my post', 1);
 SELECT * FROM Posts;
+

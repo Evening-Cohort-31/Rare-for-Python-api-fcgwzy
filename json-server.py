@@ -27,13 +27,18 @@ class JSONServer(HandleRequests):
             return self.response(response_body, status.HTTP_200_SUCCESS.value)
         
         elif url["requested_resource"].lower() == "posts":
-            if url["pk"] != 0:
-                # Gets the requested order by the id
-                response_body = get_single_users_post(query_params)
-                return self.response(response_body, status.HTTP_200_SUCCESS.value)
+            # if url["pk"] != 0:
+            #     # User requested /posts/n -> Get one specific post
+            #     response_body = get_single_post_by_id(url["pk"])
+            #     return self.response(response_body, status.HTTP_200_SUCCESS.value)
             
+            if "user_id" in query_params:
+                # User requested /posts?user_id=n -> Get all posts for that user
+                response_body = get_single_users_post(query_params["user_id"])
+                return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
-            response_body = get_single_users_post(query_params)
+            # Default: Get all posts
+            response_body = get_all_posts()
             return self.response(response_body, status.HTTP_200_SUCCESS.value)
         
 
