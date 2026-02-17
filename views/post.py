@@ -41,11 +41,22 @@ def get_all_posts():
         db_cursor = conn.cursor()
 
         # We join the tables so we get names/prices instead of just ID numbers
-        db_cursor.execute("""
-            SELECT
-                *
-            FROM Posts u               
-        """)
+        db_cursor.execute(
+                    """
+                    SELECT
+                        p.id,
+                        p.title,
+                        p.publication_date,
+                        p.image_url,
+                        p.content,
+                        p.approved,
+                        u.first_name || ' ' || u.last_name AS author,
+                        c.label AS category
+                    FROM Posts p
+                    JOIN Users u ON p.user_id = u.id
+                    JOIN Categories c ON p.category_id = c.id
+                """
+                )
 
         query_results = db_cursor.fetchall()
 
@@ -61,20 +72,24 @@ def get_single_users_post(user_id): # Pass the ID directly, not a dict
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
 
-        db_cursor.execute(""" 
-            SELECT
-                p.id,
-                p.user_id,
-                p.title,
-                p.publication_date,
-                p.content,
-                u.first_name,
-                u.last_name,
-                u.username
-            FROM Posts p
-            JOIN Users u ON p.user_id = u.id
-            WHERE p.user_id = ?;
-            """, (user_id,))
+        db_cursor.execute(
+                    """ 
+                    SELECT
+                        p.id,
+                        p.title,
+                        p.publication_date,
+                        p.image_url,
+                        p.content,
+                        p.approved,
+                        u.first_name || ' ' || u.last_name AS author,
+                        c.label AS category
+                    FROM Posts p
+                    JOIN Users u ON p.user_id = u.id
+                    JOIN Categories c ON p.category_id = c.id
+                    WHERE p.user_id = ?
+                """,
+                    (user_id,),
+                )
         
         dataset = db_cursor.fetchall()
         posts = [dict(row) for row in dataset] # Convert all rows to dicts

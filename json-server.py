@@ -4,6 +4,7 @@ from nss_handler import HandleRequests, status
 
 from views import create_user, login_user, get_all_users, get_single_user
 from views import create_post, get_all_posts, get_single_users_post
+from views import get_all_categories
 
 class JSONServer(HandleRequests):
     """Server class to handle incoming HTTP requests for shipping ships"""
@@ -27,10 +28,10 @@ class JSONServer(HandleRequests):
             return self.response(response_body, status.HTTP_200_SUCCESS.value)
         
         elif url["requested_resource"].lower() == "posts":
-            # if url["pk"] != 0:
-            #     # User requested /posts/n -> Get one specific post
-            #     response_body = get_single_post_by_id(url["pk"])
-            #     return self.response(response_body, status.HTTP_200_SUCCESS.value)
+            if url["pk"] != 0:
+                # User requested /posts/n -> Get one specific post
+                response_body = get_single_users_post(url["pk"])
+                return self.response(response_body, status.HTTP_200_SUCCESS.value)
             
             if "user_id" in query_params:
                 # User requested /posts?user_id=n -> Get all posts for that user
@@ -41,6 +42,15 @@ class JSONServer(HandleRequests):
             response_body = get_all_posts()
             return self.response(response_body, status.HTTP_200_SUCCESS.value)
         
+        elif url["requested_resource"].lower() == "categories":
+            if url["pk"] != 0:
+                # Gets the requested order by the id
+                response_body = get_all_categories()
+                return self.response(response_body, status.HTTP_200_SUCCESS.value)
+            
+
+            response_body = get_all_categories()
+            return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
         else:
             return self.response("Resource not found", status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND.value)
