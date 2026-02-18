@@ -3,6 +3,8 @@ from http.server import HTTPServer
 from nss_handler import HandleRequests, status
 
 from views import create_user, login_user, get_all_users, get_single_user
+from views import create_post, get_all_posts, get_single_users_post
+from views import create_category, get_all_categories
 from views import create_post, get_all_posts, get_single_users_post, get_post_details
 from views import get_all_categories
 
@@ -96,6 +98,13 @@ class JSONServer(HandleRequests):
                 return self.response(authenticated_user, status.HTTP_200_SUCCESS.value)
             else:
                 # If no user found, return a 400 or 401
+                return self.response("Invalid email", status.HTTP_400_CLIENT_ERROR_BAD_REQUEST_DATA.value)
+            
+        if resource == "categories":
+            response_json = create_category(request_body)
+            return self.response(response_json, status.HTTP_201_SUCCESS_CREATED.value)
+
+                    
                 return self.response(
                     "Invalid email", status.HTTP_400_CLIENT_ERROR_BAD_REQUEST_DATA.value
                 )
