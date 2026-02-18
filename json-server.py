@@ -11,10 +11,12 @@ class JSONServer(HandleRequests):
     """Server class to handle incoming HTTP requests for shipping ships"""
 
     def do_GET(self):
+        url = self.parse_url(self.path)
+        print("FULL URL:", self.path)
+        print("PARSED URL:", url)
         """Handle GET requests from a client"""
 
         response_body = ""
-        url = self.parse_url(self.path)
 
         query_params = url.get("query_params", {})
 
@@ -28,21 +30,20 @@ class JSONServer(HandleRequests):
             return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
         elif url["requested_resource"].lower() == "posts":
-            if url["pk"] != 0:
-                # User requested /posts/n -> Get one specific post
-                response_body = get_single_users_post(url["pk"])
+
+            # If there are query params, handle them first
+            if len(query_params) > 0:
+
+                if "user_id" in query_params:
+                    response_body = get_single_users_post(query_params["user_id"])
+                    return self.response(response_body, status.HTTP_200_SUCCESS.value)
+
+            # Only treat as /posts/<id> if there are NO query params
+            if url["pk"] != 0 and len(query_params) == 0:
+                response_body = get_post_details(url["pk"])
                 return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
-            if "user_id" in query_params:
-                # User requested /posts?user_id=n -> Get all posts for that user
-                response_body = get_single_users_post(query_params["user_id"])
-                return self.response(response_body, status.HTTP_200_SUCCESS.value)
-
-            if "post_id" in query_params:
-                response_body = get_post_details()
-                return self.response(response_body, status.HTTP_200_SUCCESS.value)
-
-            # Default: Get all posts
+            # Default: all posts
             response_body = get_all_posts()
             return self.response(response_body, status.HTTP_200_SUCCESS.value)
 

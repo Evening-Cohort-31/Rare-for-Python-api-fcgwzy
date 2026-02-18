@@ -101,7 +101,7 @@ def get_single_users_post(user_id):  # Pass the ID directly, not a dict
         return json.dumps(posts)
 
 
-def get_post_details():
+def get_post_details(post_id):
     with sqlite3.connect("./db.sqlite3") as conn:
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
@@ -110,7 +110,7 @@ def get_post_details():
         db_cursor.execute(
             """
                     SELECT
-                        p.id,
+                        p.id AS post_id,
                         p.title,
                         p.publication_date,
                         p.image_url,
@@ -121,14 +121,22 @@ def get_post_details():
                     FROM Posts p
                     JOIN Users u ON p.user_id = u.id
                     JOIN Categories c ON p.category_id = c.id
-                """
+                    WHERE p.id = ?
+                """,
+            (post_id,),
         )
 
-        query_results = db_cursor.fetchall()
+        row = db_cursor.fetchone()
 
-        posts = []
+        if row:
+            return json.dumps(dict(row))
+        else:
+            return json.dumps({})
+        # query_results = db_cursor.fetchone()
 
-        for row in query_results:
-            posts.append(dict(row))
+        # posts = []
 
-        return json.dumps(posts)
+        # for row in query_results:
+        #     posts.append(dict(row))
+
+        # return json.dumps(posts)
