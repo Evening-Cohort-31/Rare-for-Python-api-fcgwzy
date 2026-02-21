@@ -1,6 +1,5 @@
 import sqlite3
 import json
-from datetime import datetime
 
 def create_category(category):
     with sqlite3.connect('./db.sqlite3') as conn:
