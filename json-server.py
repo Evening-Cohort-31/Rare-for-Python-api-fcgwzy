@@ -2,7 +2,12 @@ import json
 from http.server import HTTPServer
 from nss_handler import HandleRequests, status
 
-from views import create_user, login_user, get_all_users
+from views import create_user, login_user, get_all_users, get_single_user
+from views import create_post, get_all_posts, get_single_users_post
+from views import create_category, get_all_categories
+from views import create_post, get_all_posts, get_single_users_post, get_post_details
+from views import get_all_categories
+from views import create_tag, get_all_tags
 
 
 class JSONServer(HandleRequests):
@@ -23,6 +28,41 @@ class JSONServer(HandleRequests):
                 return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
             response_body = get_all_users(query_params)
+            return self.response(response_body, status.HTTP_200_SUCCESS.value)
+
+        elif url["requested_resource"].lower() == "posts":
+
+            # If there are query params, handle them first
+            if len(query_params) > 0:
+
+                if "user_id" in query_params:
+                    response_body = get_single_users_post(query_params["user_id"])
+                    return self.response(response_body, status.HTTP_200_SUCCESS.value)
+
+            # Only treat as /posts/<id> if there are NO query params
+            if url["pk"] != 0 and len(query_params) == 0:
+                response_body = get_post_details(url["pk"])
+                return self.response(response_body, status.HTTP_200_SUCCESS.value)
+
+            # Default: all posts
+            response_body = get_all_posts()
+            return self.response(response_body, status.HTTP_200_SUCCESS.value)
+
+        elif url["requested_resource"].lower() == "categories":
+            if url["pk"] != 0:
+                # Gets the requested order by the id
+                response_body = get_all_categories()
+                return self.response(response_body, status.HTTP_200_SUCCESS.value)
+
+            response_body = get_all_categories()
+            return self.response(response_body, status.HTTP_200_SUCCESS.value)
+
+        elif url["requested_resource"].lower() == "tags":
+            if url["pk"] != 0:
+                response_body = get_all_tags()
+                return self.response(response_body, status.HTTP_200_SUCCESS.value)
+
+            response_body = get_all_tags()
             return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
         else:
@@ -55,6 +95,10 @@ class JSONServer(HandleRequests):
         if resource == "register":
             response_json = create_user(request_body)
 
+            return self.response(response_json, status.HTTP_201_SUCCESS_CREATED.value)
+
+        if resource == "tags":
+            response_json = create_tag(request_body)
             return self.response(response_json, status.HTTP_201_SUCCESS_CREATED.value)
 
         return self.response(
