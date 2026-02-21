@@ -10,13 +10,15 @@ from views import create_tag, get_all_tags
 
 
 class JSONServer(HandleRequests):
-    """Server class to handle incoming HTTP requests for shipping ships"""
 
     def do_GET(self):
         """Handle GET requests from a client"""
+        url = self.parse_url(self.path)
+        print("FULL URL:", self.path)
+        print("PARSED URL:", url)
+        """Handle GET requests from a client"""
 
         response_body = ""
-        url = self.parse_url(self.path)
 
         query_params = url.get("query_params", {})
 
@@ -54,6 +56,15 @@ class JSONServer(HandleRequests):
                 return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
             response_body = get_all_categories()
+            return self.response(response_body, status.HTTP_200_SUCCESS.value)
+        
+        elif url["requested_resource"].lower() == "comments":
+            if url["pk"] != 0:
+                # Gets the requested order by the id
+                response_body = get_all_comments()
+                return self.response(response_body, status.HTTP_200_SUCCESS.value)
+
+            response_body = get_all_comments()
             return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
         elif url["requested_resource"].lower() == "tags":
@@ -93,9 +104,21 @@ class JSONServer(HandleRequests):
 
         if resource == "register":
             response_json = create_user(request_body)
-
             return self.response(response_json, status.HTTP_201_SUCCESS_CREATED.value)
-               
+
+        if resource == "login":
+            authenticated_user = login_user(request_body)
+
+            if authenticated_user:
+                return self.response(authenticated_user, status.HTTP_200_SUCCESS.value)
+            else:
+                # If no user found, return a 400 or 401
+                return self.response("Invalid email", status.HTTP_400_CLIENT_ERROR_BAD_REQUEST_DATA.value)
+            
+        if resource == "categories":
+            response_json = create_category(request_body)
+            return self.response(response_json, status.HTTP_201_SUCCESS_CREATED.value)
+            
         if resource == "comments":
             response_json = create_comment(request_body)
 
