@@ -5,7 +5,12 @@ from nss_handler import HandleRequests, status
 from views import create_user, login_user, get_all_users, get_single_user
 from views import create_category, get_all_categories
 from views import create_post, get_all_posts, get_single_users_post, get_post_details
+<<<<<<< HEAD
 from views import create_comment, get_all_comments
+=======
+from views import get_all_categories
+from views import create_tag, get_all_tags
+>>>>>>> develop
 
 
 class JSONServer(HandleRequests):
@@ -65,6 +70,14 @@ class JSONServer(HandleRequests):
             response_body = get_all_comments()
             return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
+        elif url["requested_resource"].lower() == "tags":
+            if url["pk"] != 0:
+                response_body = get_all_tags()
+                return self.response(response_body, status.HTTP_200_SUCCESS.value)
+
+            response_body = get_all_tags()
+            return self.response(response_body, status.HTTP_200_SUCCESS.value)
+
         else:
             return self.response(
                 "Resource not found",
@@ -110,9 +123,15 @@ class JSONServer(HandleRequests):
         if resource == "categories":
             response_json = create_category(request_body)
             return self.response(response_json, status.HTTP_201_SUCCESS_CREATED.value)
+<<<<<<< HEAD
                     
         if resource == "comments":
             response_json = create_comment(request_body)
+=======
+
+        if resource == "tags":
+            response_json = create_tag(request_body)
+>>>>>>> develop
             return self.response(response_json, status.HTTP_201_SUCCESS_CREATED.value)
 
         return self.response(
