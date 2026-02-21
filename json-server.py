@@ -7,6 +7,7 @@ from views import create_post, get_all_posts, get_single_users_post
 from views import create_category, get_all_categories
 from views import create_post, get_all_posts, get_single_users_post, get_post_details
 from views import get_all_categories
+from views import create_tag, get_all_tags
 
 
 class JSONServer(HandleRequests):
@@ -58,6 +59,14 @@ class JSONServer(HandleRequests):
             response_body = get_all_categories()
             return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
+        elif url["requested_resource"].lower() == "tags":
+            if url["pk"] != 0:
+                response_body = get_all_tags()
+                return self.response(response_body, status.HTTP_200_SUCCESS.value)
+
+            response_body = get_all_tags()
+            return self.response(response_body, status.HTTP_200_SUCCESS.value)
+
         else:
             return self.response(
                 "Resource not found",
@@ -104,10 +113,9 @@ class JSONServer(HandleRequests):
             response_json = create_category(request_body)
             return self.response(response_json, status.HTTP_201_SUCCESS_CREATED.value)
 
-                    
-                return self.response(
-                    "Invalid email", status.HTTP_400_CLIENT_ERROR_BAD_REQUEST_DATA.value
-                )
+        if resource == "tags":
+            response_json = create_tag(request_body)
+            return self.response(response_json, status.HTTP_201_SUCCESS_CREATED.value)
 
         return self.response(
             "Requested resource not found",
