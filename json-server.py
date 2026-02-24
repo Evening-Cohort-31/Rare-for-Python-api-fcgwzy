@@ -2,7 +2,7 @@ import json
 from http.server import HTTPServer
 from nss_handler import HandleRequests, status
 
-from views import create_user, login_user, get_all_users, get_single_user
+from views import create_user, login_user, get_all_users
 from views import create_category, get_all_categories
 from views import create_post, get_all_posts, get_single_users_post, get_post_details
 from views import create_comment, get_all_comments
