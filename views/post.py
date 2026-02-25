@@ -127,3 +127,11 @@ def get_post_details(post_id):
             return json.dumps(dict(row))
         else:
             return json.dumps({})
+        # query_results = db_cursor.fetchone()
+
+        # posts = []
+
+        # for row in query_results:
+        #     posts.append(dict(row))
+
+        # return json.dumps(posts)

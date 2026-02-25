@@ -1,3 +1,17 @@
+-- -- Drop tables that have foreign keys first
+-- DROP TABLE IF EXISTS "PostTags";
+-- DROP TABLE IF EXISTS "PostReactions";
+-- DROP TABLE IF EXISTS "Comments";
+-- DROP TABLE IF EXISTS "Subscriptions";
+-- DROP TABLE IF EXISTS "DemotionQueue";
+-- DROP TABLE IF EXISTS "Posts";
+
+-- -- Drop the parent tables last
+-- DROP TABLE IF EXISTS "Tags";
+-- DROP TABLE IF EXISTS "Reactions";
+-- DROP TABLE IF EXISTS "Categories";
+-- DROP TABLE IF EXISTS "Users";
+
 CREATE TABLE "Users" (
   "id" INTEGER PRIMARY KEY AUTOINCREMENT,
   "first_name" varchar,
@@ -46,6 +60,7 @@ CREATE TABLE "Comments" (
   "id" INTEGER PRIMARY KEY AUTOINCREMENT,
   "post_id" INTEGER,
   "author_id" INTEGER,
+  "publication_date" date,
   "content" varchar,
   FOREIGN KEY(`post_id`) REFERENCES `Posts`(`id`),
   FOREIGN KEY(`author_id`) REFERENCES `Users`(`id`)
@@ -167,5 +182,11 @@ VALUES
  INSERT INTO Categories ('label') VALUES ('Tech');
  INSERT INTO Categories ('label') VALUES ('Software');
 
+INSERT INTO "Comments" ("post_id", "author_id", "publication_date", "content")
+VALUES (1, 1, '2026-02-20', 'This is a great post! Thanks for sharing.');
 
+INSERT INTO "Comments" ("post_id", "author_id", "publication_date", "content")
+VALUES (1, 2, '2026-02-21', 'I disagree with the second paragraph, but overall good read.');
 
+INSERT INTO "Comments" ("post_id", "author_id", "publication_date", "content")
+VALUES (2, 1, '2026-02-22', 'Does anyone know if there will be a part 2 to this?');

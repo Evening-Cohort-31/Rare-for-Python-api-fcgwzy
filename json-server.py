@@ -2,18 +2,17 @@ import json
 from http.server import HTTPServer
 from nss_handler import HandleRequests, status
 
-from views import create_user, login_user, get_all_users, get_single_user
-from views import create_post, get_all_posts, get_single_users_post
+from views import create_user, login_user, get_all_users
 from views import create_category, get_all_categories
 from views import create_post, get_all_posts, get_single_users_post, get_post_details
-from views import get_all_categories
+from views import create_comment, get_all_comments
 from views import create_tag, get_all_tags
 
 
 class JSONServer(HandleRequests):
-    """Server class to handle incoming HTTP requests for shipping ships"""
 
     def do_GET(self):
+        """Handle GET requests from a client"""
         url = self.parse_url(self.path)
         print("FULL URL:", self.path)
         print("PARSED URL:", url)
@@ -58,6 +57,15 @@ class JSONServer(HandleRequests):
 
             response_body = get_all_categories()
             return self.response(response_body, status.HTTP_200_SUCCESS.value)
+        
+        elif url["requested_resource"].lower() == "comments":
+            if url["pk"] != 0:
+                # Gets the requested order by the id
+                response_body = get_all_comments()
+                return self.response(response_body, status.HTTP_200_SUCCESS.value)
+
+            response_body = get_all_comments()
+            return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
         elif url["requested_resource"].lower() == "tags":
             if url["pk"] != 0:
@@ -68,10 +76,8 @@ class JSONServer(HandleRequests):
             return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
         else:
-            return self.response(
-                "Resource not found",
-                status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND.value,
-            )
+            return self.response("Resource not found", status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND.value)
+
 
     def do_PUT(self):
         """Handle PUT requests from clients"""
@@ -112,6 +118,9 @@ class JSONServer(HandleRequests):
         if resource == "categories":
             response_json = create_category(request_body)
             return self.response(response_json, status.HTTP_201_SUCCESS_CREATED.value)
+            
+        if resource == "comments":
+            response_json = create_comment(request_body)
 
         if resource == "tags":
             response_json = create_tag(request_body)

@@ -1,6 +1,5 @@
 import sqlite3
 import json
-from datetime import datetime
 
 def create_category(category):
     with sqlite3.connect('./db.sqlite3') as conn:
@@ -30,7 +29,8 @@ def get_all_categories():
             SELECT
                 c.id,
                 c.label
-            FROM Categories c               
+            FROM Categories c   
+            ORDER BY label ASC            
         """)
 
         query_results = db_cursor.fetchall()
