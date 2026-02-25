@@ -57,6 +57,9 @@ def get_all_posts():
                     FROM Posts p
                     JOIN Users u ON p.user_id = u.id
                     JOIN Categories c ON p.category_id = c.id
+                    WHERE p.approved = 1
+                    AND p.publication_date <=DATETIME('now')
+                    ORDER BY p.publication_date DESC;
                 """
         )
 
