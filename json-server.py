@@ -150,6 +150,11 @@ class JSONServer(HandleRequests):
         if resource == "tags":
             response_json = create_tag(request_body)
             return self.response(response_json, status.HTTP_201_SUCCESS_CREATED.value)
+        
+        if resource == "posts":
+            response_json = create_post(request_body)
+            return self.response(response_json, status.HTTP_201_SUCCESS_CREATED.value)
+
 
         return self.response(
             "Requested resource not found",
