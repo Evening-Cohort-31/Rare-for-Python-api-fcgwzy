@@ -1,17 +1,11 @@
+"""Database functions for managing posts."""
 import sqlite3
 import json
 from datetime import datetime
 
 
 def create_post(post):
-    """Adds a post to the database when they register
-
-    Args:
-        post (dictionary): The dictionary passed to the register post request
-
-    Returns:
-        json string: Contains the token of the newly created post
-    """
+    """Inserts a new post into the database."""
     with sqlite3.connect("./db.sqlite3") as conn:
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
@@ -25,23 +19,23 @@ def create_post(post):
                 post["category_id"],
                 post["title"],
                 datetime.now(),
-                post["image_url"],
+                post.get("image_url", ""),
                 post["content"],
-                post["approved"],
+                1,
             ),
         )
 
         id = db_cursor.lastrowid
 
-        return json.dumps({"token": id, "valid": True})
+        return json.dumps({"id": id})
 
 
 def get_all_posts():
+    """Returns all posts from the database."""
     with sqlite3.connect("./db.sqlite3") as conn:
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
 
-        # We join the tables so we get names/prices instead of just ID numbers
         db_cursor.execute(
             """
                     SELECT
@@ -70,7 +64,8 @@ def get_all_posts():
         return json.dumps(posts)
 
 
-def get_single_users_post(user_id):  # Pass the ID directly, not a dict
+def get_single_users_post(user_id):
+    """Returns all posts belonging to a specific user."""
     with sqlite3.connect("./db.sqlite3") as conn:
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
@@ -96,17 +91,17 @@ def get_single_users_post(user_id):  # Pass the ID directly, not a dict
         )
 
         dataset = db_cursor.fetchall()
-        posts = [dict(row) for row in dataset]  # Convert all rows to dicts
+        posts = [dict(row) for row in dataset]
 
         return json.dumps(posts)
 
 
 def get_post_details(post_id):
+    """Returns the details of a single post by its id."""
     with sqlite3.connect("./db.sqlite3") as conn:
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
 
-        # We join the tables so we get names/prices instead of just ID numbers
         db_cursor.execute(
             """
                     SELECT
@@ -132,11 +127,3 @@ def get_post_details(post_id):
             return json.dumps(dict(row))
         else:
             return json.dumps({})
-        # query_results = db_cursor.fetchone()
-
-        # posts = []
-
-        # for row in query_results:
-        #     posts.append(dict(row))
-
-        # return json.dumps(posts)
