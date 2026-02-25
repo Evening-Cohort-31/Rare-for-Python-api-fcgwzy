@@ -32,9 +32,9 @@ def get_all_categories():
             SELECT
                 c.id,
                 c.label
-            FROM Categories c               
-        """
-        )
+            FROM Categories c   
+            ORDER BY label ASC            
+        """)
 
         query_results = db_cursor.fetchall()
 
