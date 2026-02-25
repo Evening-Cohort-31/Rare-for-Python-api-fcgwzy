@@ -103,9 +103,6 @@ CREATE TABLE "Categories" (
 INSERT INTO Categories ('label') VALUES ('News');
 INSERT INTO Tags ('label') VALUES ('JavaScript');
 INSERT INTO Reactions ('label', 'image_url') VALUES ('happy', 'https://pngtree.com/so/happy');
-INSERT INTO Posts (user_id, category_id, title, publication_date, image_url, content, approved)
-VALUES (1, 1, 'My First Post', '2024-02-14', 'https://example.com/image.jpg', 'This is the content of my post', 1);
-SELECT * FROM Posts;
 
 INSERT INTO Posts 
 (user_id, category_id, title, publication_date, image_url, content, approved)
