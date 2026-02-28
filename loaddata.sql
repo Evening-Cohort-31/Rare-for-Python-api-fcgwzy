@@ -200,3 +200,10 @@ VALUES
 (8, 'Tahani', 'Al-Jamil', 'tahani@thegoodplace.com', 'Just finished tea with Beyoncé.', 'tahani_aj', 'password123', '', '2026-02-24', 1);
 
 INSERT INTO Categories ('label') VALUES ('Design'), ('Tutorial'), ('Clean Code'), ('Database'), ('Git'), ('Career');
+
+INSERT INTO "Tags" ("label") VALUES ('Python');
+INSERT INTO "Tags" ("label") VALUES ('CSS');
+INSERT INTO "Tags" ("label") VALUES ('SQL');
+INSERT INTO "Tags" ("label") VALUES ('Node.js');
+INSERT INTO "Tags" ("label") VALUES ('Web Security');
+INSERT INTO "Tags" ("label") VALUES ('Project Management');

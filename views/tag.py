@@ -28,7 +28,8 @@ def get_all_tags():
             SELECT
                 t.id,
                 t.label
-            FROM Tags t               
+            FROM Tags t 
+            ORDER BY t.label ASC              
         """)
 
         query_results = db_cursor.fetchall()
