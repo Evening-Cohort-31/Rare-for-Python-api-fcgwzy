@@ -2,6 +2,7 @@ import sqlite3
 import json
 from datetime import datetime
 
+
 def login_user(user):
     """Checks for the user in the database
 
@@ -12,28 +13,30 @@ def login_user(user):
         json string: If the user was found will return valid boolean of True and the user's id as the token
                      If the user was not found will return valid boolean False
     """
-    with sqlite3.connect('./db.sqlite3') as conn:
+    with sqlite3.connect("./db.sqlite3") as conn:
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
 
-        db_cursor.execute("""
-            select id, username
+        db_cursor.execute(
+            """
+            select id, username, is_admin
             from Users
             where username = ?
             and password = ?
-        """, (user['username'], user['password']))
+        """,
+            (user["username"], user["password"]),
+        )
 
         user_from_db = db_cursor.fetchone()
 
         if user_from_db is not None:
             response = {
-                'valid': True,
-                'token': user_from_db['id']
+                "valid": True,
+                "token": user_from_db["id"],
+                "is_admin": user_from_db["is_admin"],
             }
         else:
-            response = {
-                'valid': False
-            }
+            response = {"valid": False}
 
         return json.dumps(response)
 
@@ -47,28 +50,29 @@ def create_user(user):
     Returns:
         json string: Contains the token of the newly created user
     """
-    with sqlite3.connect('./db.sqlite3') as conn:
+    with sqlite3.connect("./db.sqlite3") as conn:
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
 
-        db_cursor.execute("""
-        Insert into Users (first_name, last_name, username, email, password, bio, created_on, active) values (?, ?, ?, ?, ?, ?, ?, 1)
-        """, (
-            user['first_name'],
-            user['last_name'],
-            user['username'],
-            user['email'],
-            user['password'],
-            user['bio'],
-            datetime.now()
-        ))
+        db_cursor.execute(
+            """
+        Insert into Users (first_name, last_name, username, email, password, bio, created_on, active, is_admin) values (?, ?, ?, ?, ?, ?, ?, 1, 0)
+        """,
+            (
+                user["first_name"],
+                user["last_name"],
+                user["username"],
+                user["email"],
+                user["password"],
+                user["bio"],
+                datetime.now(),
+            ),
+        )
 
         id = db_cursor.lastrowid
 
-        return json.dumps({
-            'token': id,
-            'valid': True
-        })
+        return json.dumps({"token": id, "valid": True, "is_admin": 0})
+
 
 def get_all_users(query_params):
     with sqlite3.connect("./db.sqlite3") as conn:
@@ -76,9 +80,9 @@ def get_all_users(query_params):
         db_cursor = conn.cursor()
 
         # We join the tables so we get names/prices instead of just ID numbers
-        db_cursor.execute("""
+        db_cursor.execute(
+            """
             SELECT
-                u.id,
                 u.first_name,
                 u.last_name,
                 u.email,
@@ -88,7 +92,8 @@ def get_all_users(query_params):
                 u.created_on,
                 u.active
             FROM Users u               
-        """)
+        """
+        )
 
         query_results = db_cursor.fetchall()
 
@@ -99,7 +104,8 @@ def get_all_users(query_params):
 
         return json.dumps(users)
 
-def get_single_user(user_data):
+
+def user_is_admin(user_id):
     with sqlite3.connect("./db.sqlite3") as conn:
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
@@ -119,3 +125,18 @@ def get_single_user(user_data):
             return json.dumps(dict(data))
         
         return None
+        db_cursor.execute(
+            """
+            SELECT is_admin
+            FROM Users
+            WHERE id = ?
+        """,
+            (user_id,),
+        )
+
+        user = db_cursor.fetchone()
+
+        if user is None:
+            return False
+
+        return user["is_admin"] == 1
