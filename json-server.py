@@ -2,17 +2,16 @@ import json
 from http.server import HTTPServer
 from nss_handler import HandleRequests, status
 
-from views import create_user, login_user, get_all_users
+from views import create_user, login_user, get_all_users, user_is_admin
 from views import create_category, get_all_categories, delete_category
 from views import (
     create_post,
     get_all_posts,
     get_single_users_post,
     get_post_details,
-
 )
 from views import create_comment, get_all_comments
-from views import create_tag, get_all_tags, update_post_tags
+from views import create_tag, get_all_tags, update_post_tags, delete_tag
 
 
 class JSONServer(HandleRequests):
@@ -115,9 +114,38 @@ class JSONServer(HandleRequests):
             if pk != 0:
                 successfully_deleted = delete_category(pk)
                 if successfully_deleted:
-                    return self.response("", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY.value)
-                
-                return self.response("Response resource not found", status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND.value)
+                    return self.response(
+                        "", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY.value
+                    )
+
+                return self.response(
+                    "Response resource not found",
+                    status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND.value,
+                )
+
+        elif url["requested_resource"].lower() == "tags":
+            if pk == 0:
+                return self.response("Tag ID required", 400)
+
+            auth_header = self.headers.get("Authorization")
+
+            if not auth_header:
+                return self.response("Unauthorized", 401)
+
+            try:
+                token = auth_header.split(" ")[1]
+            except IndexError:
+                return self.response("Invalid Authorization Header", 401)
+
+            if not user_is_admin(token):
+                return self.response("Forbidden: Admins only", 403)
+
+            success = delete_tag(pk)
+
+            if success:
+                return self.response("", 204)
+            else:
+                return self.response("Not Found", 404)
 
     def do_POST(self):
         """Handles POST request from client"""
@@ -159,11 +187,10 @@ class JSONServer(HandleRequests):
         if resource == "tags":
             response_json = create_tag(request_body)
             return self.response(response_json, status.HTTP_201_SUCCESS_CREATED.value)
-        
+
         if resource == "posts":
             response_json = create_post(request_body)
             return self.response(response_json, status.HTTP_201_SUCCESS_CREATED.value)
-
 
         return self.response(
             "Requested resource not found",
