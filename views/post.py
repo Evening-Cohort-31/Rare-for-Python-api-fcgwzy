@@ -127,3 +127,18 @@ def get_post_details(post_id):
             return json.dumps(dict(row))
         else:
             return json.dumps({})
+        
+def delete_post(post_id):
+    """Deletes a post from the database by its id."""
+    with sqlite3.connect("./db.sqlite3") as conn:
+        db_cursor = conn.cursor()
+
+        db_cursor.execute(
+            """
+            DELETE FROM Posts
+            WHERE id = ?
+            """,
+            (post_id,),
+        )
+
+        return True

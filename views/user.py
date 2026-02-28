@@ -104,7 +104,7 @@ def get_single_user(user_data):
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
 
-        # Use a ? as a placeholder to prevent SQL injection
+        
         db_cursor.execute(""" 
             SELECT
                 u.id,
