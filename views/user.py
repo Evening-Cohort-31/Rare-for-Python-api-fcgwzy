@@ -106,12 +106,6 @@ def get_all_users(query_params):
 
 
 def user_is_admin(user_id):
-    print("incoming user_id:", user_id)
-    try:
-        user_id = int(user_id)
-    except (TypeError, ValueError):
-        print("Failed to convert to int")
-        return False
     with sqlite3.connect("./db.sqlite3") as conn:
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
@@ -129,5 +123,5 @@ def user_is_admin(user_id):
 
         if user is None:
             return False
-        print("is_admin value:", user["is_admin"])
+
         return user["is_admin"] == 1
