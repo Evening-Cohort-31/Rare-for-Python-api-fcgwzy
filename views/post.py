@@ -131,32 +131,10 @@ def get_post_details(post_id):
             return json.dumps(dict(row))
         else:
             return json.dumps({})
-        
+
+
 def delete_post(post_id):
     """Deletes a post from the database by its id."""
-        if not row:
-            return json.dumps({})
-
-        post = dict(row)
-
-        db_cursor.execute(
-            """
-                SELECT t.id, t.label
-                FROM Tags t
-                JOIN PostTags pt ON pt.tag_id = t.id
-                WHERE pt.post_id =?
-            """,
-            (post_id,),
-        )
-
-        tag_rows = db_cursor.fetchall()
-
-        post["tags"] = [dict(tag) for tag in tag_rows]
-
-        return json.dumps(post)
-
-
-def update_post_tags(post_id, tag_ids):
     with sqlite3.connect("./db.sqlite3") as conn:
         db_cursor = conn.cursor()
 
@@ -169,32 +147,3 @@ def update_post_tags(post_id, tag_ids):
         )
 
         return True
-            DELETE FROM PostTags
-            WHERE post_id = ?
-        """,
-            (post_id,),
-        )
-
-        for tag_id in tag_ids:
-            db_cursor.execute(
-                """
-                INSERT INTO PostTags (post_id, tag_id)
-                VALUES (?, ?)
-            """,
-                (post_id, tag_id),
-            )
-
-        conn.commit()
-
-
-# def delete_post_tags(post_id, tag_ids):
-#     with sqlite3.connect("./db.sqlite3") as conn:
-#         conn.row_factory = sqlite3.Row
-#         db_cursor = conn.cursor()
-
-#         db_cursor.execute("""
-#             DELETE FROM PostTags
-#             WHERE post_id = ?
-#         """, (post_id,))
-
-#         )

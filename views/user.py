@@ -110,21 +110,6 @@ def user_is_admin(user_id):
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
 
-        
-        db_cursor.execute(""" 
-            SELECT
-                u.id,
-                u.email
-            FROM Users u
-            WHERE u.email = ?
-            """, (user_data['email'],))
-        
-        data = db_cursor.fetchone()
-
-        if data:
-            return json.dumps(dict(data))
-        
-        return None
         db_cursor.execute(
             """
             SELECT is_admin
