@@ -3,7 +3,7 @@ from http.server import HTTPServer
 from nss_handler import HandleRequests, status
 
 from views import create_user, login_user, get_all_users
-from views import create_category, get_all_categories, delete_category
+from views import create_category, get_all_categories, delete_category, update_category, get_single_category
 from views import (
     create_post,
     get_all_posts,
@@ -55,7 +55,7 @@ class JSONServer(HandleRequests):
         elif url["requested_resource"].lower() == "categories":
             if url["pk"] != 0:
                 # Gets the requested order by the id
-                response_body = get_all_categories()
+                response_body = get_single_category(url["pk"])
                 return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
             response_body = get_all_categories()
@@ -97,6 +97,16 @@ class JSONServer(HandleRequests):
             tag_ids = request_body.get("tag_ids", [])
 
             update_post_tags(url["pk"], tag_ids)
+
+            return self.response("", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY.value)
+        
+        elif url["requested_resource"].lower() == "categories" and url["pk"] != 0:
+
+            contact_len = int(self.headers.get("content-length", 0))
+            request_body = self.rfile.read(contact_len)
+            request_body = json.loads(request_body)
+
+            update_category(url["pk"], request_body)
 
             return self.response("", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY.value)
 
