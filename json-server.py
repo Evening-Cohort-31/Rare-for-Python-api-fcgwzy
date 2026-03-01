@@ -9,6 +9,7 @@ from views import (
     get_all_posts,
     get_single_users_post,
     get_post_details,
+    edit_post
 
 )
 from views import create_comment, get_all_comments
@@ -87,21 +88,31 @@ class JSONServer(HandleRequests):
     def do_PUT(self):
         """Handle PUT requests from clients"""
         url = self.parse_url(self.path)
+        pk = url.get("pk")
+        resource = url.get("requested_resource").lower()
 
-        if url["requested_resource"].lower() == "posts" and url["pk"] != 0:
+        # Handle the "undefined" string sent by React to avoid server crash
 
-            contact_len = int(self.headers.get("content-length", 0))
-            request_body = self.rfile.read(contact_len)
-            request_body = json.loads(request_body)
+        if pk == "undefined":
+            return self.response("ID in URL is undefined", status.HTTP_400_CLIENT_ERROR_BAD_REQUEST_DATA)
 
+        if resource == "posts" and pk != 0:
+            content_len = int(self.headers.get("content-length", 0))
+            request_body = json.loads(self.rfile.read(content_len))
+
+            # 1. Update the Post itself
+            success = edit_post(pk, request_body)
+
+            # 2. Update the Tags
             tag_ids = request_body.get("tag_ids", [])
+            update_post_tags(pk, tag_ids)
 
-            update_post_tags(url["pk"], tag_ids)
-
-            return self.response("", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY.value)
-
-        else:
-            return self.response(
+            if success:
+                return self.response("", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY.value) 
+            
+            return self.response("Post not found", status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND.value)
+        
+        return self.response(
                 "Resource not found",
                 status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND.value,
             )

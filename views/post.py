@@ -48,7 +48,7 @@ def get_all_posts():
                         p.approved,
                         u.id,
                         u.first_name || ' ' || u.last_name AS author,
-                        c.label AS category
+                        c.id AS category_id
                     FROM Posts p
                     JOIN Users u ON p.user_id = u.id
                     JOIN Categories c ON p.category_id = c.id
@@ -85,7 +85,7 @@ def get_single_users_post(user_id):
                         p.approved,
                         u.id AS user_id,
                         u.first_name || ' ' || u.last_name AS author,
-                        c.label AS category
+                        c.id AS category_id
                     FROM Posts p
                     JOIN Users u ON p.user_id = u.id
                     JOIN Categories c ON p.category_id = c.id
@@ -116,7 +116,7 @@ def get_post_details(post_id):
                         p.content,
                         p.approved,
                         u.first_name || ' ' || u.last_name AS author,
-                        c.label AS category
+                        c.id AS category_id
                     FROM Posts p
                     JOIN Users u ON p.user_id = u.id
                     JOIN Categories c ON p.category_id = c.id
@@ -160,19 +160,54 @@ def update_post_tags(post_id, tag_ids):
         """,
             (post_id,),
         )
+        tag_data = [(post_id, tag_id) for tag_id in tag_ids]
 
-        for tag_id in tag_ids:
-            db_cursor.execute(
-                """
+        db_cursor.executemany(
+            """
                 INSERT INTO PostTags (post_id, tag_id)
                 VALUES (?, ?)
             """,
-                (post_id, tag_id),
-            )
+            tag_data,
+        )
 
         conn.commit()
 
 
+import sqlite3
+import json
+
+def edit_post(pk, post_data):
+    with sqlite3.connect("./db.sqlite3") as conn:
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
+
+        db_cursor.execute(
+            """
+            UPDATE Posts
+                SET
+                    title = ?,
+                    image_url = ?,
+                    content = ?,
+                    category_id = ?
+            WHERE id = ?
+            """,
+            (
+                post_data.get("title"),
+                post_data.get("image_url"),
+                post_data.get("content"),
+                # This looks for both 'category_id' (DB style) or 'categoryId' (JS style)
+                post_data.get("category_id") or post_data.get("categoryId"),
+                pk,
+            ),
+        )
+
+        # Check if any row was actually updated
+        rows_affected = db_cursor.rowcount
+        
+        # Always commit changes to the database
+        conn.commit()
+
+    return rows_affected > 0
 # def delete_post_tags(post_id, tag_ids):
 #     with sqlite3.connect("./db.sqlite3") as conn:
 #         conn.row_factory = sqlite3.Row
