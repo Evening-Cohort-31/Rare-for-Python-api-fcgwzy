@@ -147,3 +147,26 @@ def delete_post(post_id):
         )
 
         return True
+    
+def update_post_tags(post_id, tag_ids):
+    with sqlite3.connect("./db.sqlite3") as conn:
+        db_cursor = conn.cursor()
+
+        db_cursor.execute(
+            """
+            DELETE FROM PostTags
+            WHERE post_id = ?
+        """,
+            (post_id,),
+        )
+
+        for tag_id in tag_ids:
+            db_cursor.execute(
+                """
+                INSERT INTO PostTags (post_id, tag_id)
+                VALUES (?, ?)
+            """,
+                (post_id, tag_id),
+            )
+
+        conn.commit()

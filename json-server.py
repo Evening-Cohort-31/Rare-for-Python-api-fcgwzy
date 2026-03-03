@@ -5,7 +5,7 @@ from nss_handler import HandleRequests, status
 from views import create_category, get_all_categories, delete_category, update_category, get_single_category
 from views import create_user, login_user, get_all_users, user_is_admin
 from views import create_post, get_all_posts, get_single_users_post, get_post_details, delete_post
-from views import create_tag, get_all_tags, delete_tag
+from views import create_tag, get_all_tags, update_post_tags, delete_tag
 from views import create_comment, get_all_comments
 
 
@@ -60,19 +60,16 @@ class JSONServer(HandleRequests):
         url = self.parse_url(self.path)
 
         if url["requested_resource"].lower() == "posts" and url["pk"] != 0:
-
             contact_len = int(self.headers.get("content-length", 0))
             request_body = self.rfile.read(contact_len)
             request_body = json.loads(request_body)
 
             tag_ids = request_body.get("tag_ids", [])
-
             update_post_tags(url["pk"], tag_ids)
 
             return self.response("", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY.value)
-        
-        elif url["requested_resource"].lower() == "categories" and url["pk"] != 0:
 
+        elif url["requested_resource"].lower() == "categories" and url["pk"] != 0:
             contact_len = int(self.headers.get("content-length", 0))
             request_body = self.rfile.read(contact_len)
             request_body = json.loads(request_body)
