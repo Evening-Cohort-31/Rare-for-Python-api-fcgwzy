@@ -145,21 +145,36 @@ def delete_post(post_id):
             """,
             (post_id,),
         )
-        tag_data = [(post_id, tag_id) for tag_id in tag_ids]
 
-        db_cursor.executemany(
+        db_cursor.execute(
             """
                 INSERT INTO PostTags (post_id, tag_id)
                 VALUES (?, ?)
             """,
-            tag_data,
+            (post_id),
         )
 
         conn.commit()
 
-
-import sqlite3
-import json
+def update_post_tags(post_id, tag_ids):
+    with sqlite3.connect("./db.sqlite3") as conn:
+        db_cursor = conn.cursor()
+        db_cursor.execute(
+            """
+            DELETE FROM PostTags
+            WHERE post_id = ?
+        """,
+            (post_id,),
+        )
+        for tag_id in tag_ids:
+            db_cursor.execute(
+                """
+                INSERT INTO PostTags (post_id, tag_id)
+                VALUES (?, ?)
+            """,
+                (post_id, tag_id),
+            )
+        conn.commit()
 
 def edit_post(pk, post_data):
     with sqlite3.connect("./db.sqlite3") as conn:
@@ -188,19 +203,9 @@ def edit_post(pk, post_data):
 
         # Check if any row was actually updated
         rows_affected = db_cursor.rowcount
-        
+       
         # Always commit changes to the database
         conn.commit()
 
     return rows_affected > 0
-# def delete_post_tags(post_id, tag_ids):
-#     with sqlite3.connect("./db.sqlite3") as conn:
-#         conn.row_factory = sqlite3.Row
-#         db_cursor = conn.cursor()
 
-#         db_cursor.execute("""
-#             DELETE FROM PostTags
-#             WHERE post_id = ?
-#         """, (post_id,))
-
-#         )
