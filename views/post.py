@@ -26,9 +26,9 @@ def create_post(post):
             ),
         )
 
-        id = db_cursor.lastrowid
+        new_post_id = db_cursor.lastrowid
 
-        return json.dumps({"id": id})
+        return json.dumps({"id": new_post_id})
 
 
 def get_all_posts():
@@ -83,7 +83,7 @@ def get_single_users_post(user_id):
                         p.image_url,
                         p.content,
                         p.approved,
-                        u.id AS user_id,
+                        p.user_id AS user_id,
                         u.first_name || ' ' || u.last_name AS author,
                         c.id AS category_id
                     FROM Posts p
@@ -146,19 +146,12 @@ def delete_post(post_id):
             (post_id,),
         )
 
-        db_cursor.execute(
-            """
-                INSERT INTO PostTags (post_id, tag_id)
-                VALUES (?, ?)
-            """,
-            (post_id),
-        )
-
         conn.commit()
 
 def update_post_tags(post_id, tag_ids):
     with sqlite3.connect("./db.sqlite3") as conn:
         db_cursor = conn.cursor()
+
         db_cursor.execute(
             """
             DELETE FROM PostTags
@@ -166,6 +159,7 @@ def update_post_tags(post_id, tag_ids):
         """,
             (post_id,),
         )
+
         for tag_id in tag_ids:
             db_cursor.execute(
                 """
@@ -174,12 +168,27 @@ def update_post_tags(post_id, tag_ids):
             """,
                 (post_id, tag_id),
             )
+
         conn.commit()
 
 def edit_post(pk, post_data):
     with sqlite3.connect("./db.sqlite3") as conn:
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
+
+        db_cursor.execute("SELECT * FROM Posts WHERE id = ?", (pk,))
+        existing_post = db_cursor.fetchone()
+
+        if not existing_post:
+            return False
+        
+        title = post_data.get("title") or existing_post["title"]
+        image_url = post_data.get("image_url") or existing_post["image_url"]
+        content = post_data.get("content") or existing_post["content"]
+        cat_id = post_data.get("category_id") or post_data.get("categoryId") or existing_post["category_id"]
+
+        approved = existing_post["approved"]
+        pub_date = existing_post["publication_date"]
 
         db_cursor.execute(
             """
@@ -188,17 +197,12 @@ def edit_post(pk, post_data):
                     title = ?,
                     image_url = ?,
                     content = ?,
-                    category_id = ?
+                    category_id = ?,
+                    approved = ?,
+                    publication_date = ?
             WHERE id = ?
             """,
-            (
-                post_data.get("title"),
-                post_data.get("image_url"),
-                post_data.get("content"),
-                # This looks for both 'category_id' (DB style) or 'categoryId' (JS style)
-                post_data.get("category_id") or post_data.get("categoryId"),
-                pk,
-            ),
+            (title, image_url, content, cat_id, approved, pub_date, pk),
         )
 
         # Check if any row was actually updated
