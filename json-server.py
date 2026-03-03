@@ -2,9 +2,9 @@ import json
 from http.server import HTTPServer
 from nss_handler import HandleRequests, status
 
+from views import create_category, get_all_categories, delete_category, update_category, get_single_category
 from views import create_user, login_user, get_all_users, user_is_admin
 from views import create_post, get_all_posts, get_single_users_post, get_post_details, delete_post
-from views import create_category, get_all_categories, delete_category
 from views import create_tag, get_all_tags, delete_tag
 from views import create_comment, get_all_comments
 
@@ -34,6 +34,10 @@ class JSONServer(HandleRequests):
             return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
         elif url["requested_resource"].lower() == "categories":
+            if url["pk"] != 0:
+                response_body = get_single_category(url["pk"])
+                return self.response(response_body, status.HTTP_200_SUCCESS.value)
+
             response_body = get_all_categories()
             return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
@@ -53,7 +57,35 @@ class JSONServer(HandleRequests):
 
     def do_PUT(self):
         """Handle PUT requests from clients"""
-        pass
+        url = self.parse_url(self.path)
+
+        if url["requested_resource"].lower() == "posts" and url["pk"] != 0:
+
+            contact_len = int(self.headers.get("content-length", 0))
+            request_body = self.rfile.read(contact_len)
+            request_body = json.loads(request_body)
+
+            tag_ids = request_body.get("tag_ids", [])
+
+            update_post_tags(url["pk"], tag_ids)
+
+            return self.response("", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY.value)
+        
+        elif url["requested_resource"].lower() == "categories" and url["pk"] != 0:
+
+            contact_len = int(self.headers.get("content-length", 0))
+            request_body = self.rfile.read(contact_len)
+            request_body = json.loads(request_body)
+
+            update_category(url["pk"], request_body)
+
+            return self.response("", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY.value)
+
+        else:
+            return self.response(
+                "Resource not found",
+                status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND.value,
+            )
 
     def do_DELETE(self):
         """Handle the delete requests from clients"""
