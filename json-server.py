@@ -134,7 +134,8 @@ class JSONServer(HandleRequests):
 
             try:
                 token = auth_header.split(" ")[1]
-            except IndexError:
+                user_id = int(token)
+            except (IndexError, ValueError, TypeError):
                 return self.response("Invalid Authorization Header", 401)
 
             if not user_is_admin(token):
