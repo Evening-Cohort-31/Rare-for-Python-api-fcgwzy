@@ -8,4 +8,4 @@ from .post import (
     update_post_tags,
 )
 from .comment import create_comment, get_all_comments
-from .tag import create_tag, get_all_tags, delete_tag
+from .tag import create_tag, get_all_tags, delete_tag, update_tag
