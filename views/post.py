@@ -46,6 +46,7 @@ def get_all_posts():
                         p.image_url,
                         p.content,
                         p.approved,
+                        p.user_id,
                         u.id,
                         u.first_name || ' ' || u.last_name AS author,
                         c.id AS category_id
