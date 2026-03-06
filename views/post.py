@@ -115,6 +115,7 @@ def get_post_details(post_id):
                         p.image_url,
                         p.content,
                         p.approved,
+                        p.user_id,
                         u.first_name || ' ' || u.last_name AS author,
                         c.id AS category_id
                     FROM Posts p

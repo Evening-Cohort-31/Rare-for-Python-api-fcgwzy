@@ -83,6 +83,7 @@ def get_all_users(query_params):
         db_cursor.execute(
             """
             SELECT
+                u.id,
                 u.first_name,
                 u.last_name,
                 u.email,
