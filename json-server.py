@@ -9,8 +9,9 @@ from views import (
     update_category,
     get_single_category,
 )
-from views import create_user, login_user, get_all_users, get_user_by_id, user_is_admin
-from views import create_tag, get_all_tags, delete_tag
+from views import create_user, login_user, get_all_users, user_is_admin
+from views import create_comment, get_all_comments
+from views import create_tag, get_all_tags, delete_tag, update_tag
 from views import (
     create_post,
     get_all_posts,
@@ -18,9 +19,9 @@ from views import (
     get_post_details,
     delete_post,
     update_post_tags,
-    edit_post
+    edit_post,
 )
-from views import create_comment, get_all_comments
+
 
 class JSONServer(HandleRequests):
 
@@ -79,7 +80,9 @@ class JSONServer(HandleRequests):
         resource = url.get("requested_resource").lower()
 
         if pk == "undefined":
-            return self.response("ID in URL is undefined", status.HTTP_400_CLIENT_ERROR_BAD_REQUEST_DATA)
+            return self.response(
+                "ID in URL is undefined", status.HTTP_400_CLIENT_ERROR_BAD_REQUEST_DATA
+            )
 
         content_len = int(self.headers.get("content-length", 0))
         raw_body = self.rfile.read(content_len)
@@ -93,7 +96,9 @@ class JSONServer(HandleRequests):
 
             if success:
                 return self.response("", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY.value)
-            return self.response("Post not found", status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND)
+            return self.response(
+                "Post not found", status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND
+            )
 
         if url["requested_resource"].lower() == "categories" and url["pk"] != 0:
             content_len = int(self.headers.get("content-length", 0))
@@ -104,6 +109,28 @@ class JSONServer(HandleRequests):
 
             return self.response("", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY.value)
 
+        elif url["requested_resource"].lower() == "tags" and url["pk"] != 0:
+
+            auth_header = self.headers.get("Authorization")
+
+            if not auth_header:
+                return self.response("Unauthorized", 401)
+
+            try:
+                token = auth_header.split(" ")[1]
+                user_id = int(token)
+            except (IndexError, ValueError, TypeError):
+                return self.response("Invalid Authorization Header", 401)
+
+            if not user_is_admin(user_id):
+                return self.response("Forbidden: Admins only", 403)
+
+            success = update_tag(url["pk"], request_body)
+
+            if success:
+                return self.response("", 204)
+            else:
+                return self.response("Not Found", 404)
         else:
             return self.response(
                 "Resource not found",
