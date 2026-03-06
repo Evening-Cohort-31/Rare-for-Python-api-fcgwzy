@@ -26,9 +26,9 @@ def create_post(post):
             ),
         )
 
-        id = db_cursor.lastrowid
+        new_post_id = db_cursor.lastrowid
 
-        return json.dumps({"id": id})
+        return json.dumps({"id": new_post_id})
 
 
 def get_all_posts():
@@ -48,7 +48,7 @@ def get_all_posts():
                         p.approved,
                         u.id,
                         u.first_name || ' ' || u.last_name AS author,
-                        c.label AS category
+                        c.id AS category_id
                     FROM Posts p
                     JOIN Users u ON p.user_id = u.id
                     JOIN Categories c ON p.category_id = c.id
@@ -83,9 +83,9 @@ def get_single_users_post(user_id):
                         p.image_url,
                         p.content,
                         p.approved,
-                        u.id AS user_id,
+                        p.user_id AS user_id,
                         u.first_name || ' ' || u.last_name AS author,
-                        c.label AS category
+                        c.id AS category_id
                     FROM Posts p
                     JOIN Users u ON p.user_id = u.id
                     JOIN Categories c ON p.category_id = c.id
@@ -116,7 +116,7 @@ def get_post_details(post_id):
                         p.content,
                         p.approved,
                         u.first_name || ' ' || u.last_name AS author,
-                        c.label AS category
+                        c.id AS category_id
                     FROM Posts p
                     JOIN Users u ON p.user_id = u.id
                     JOIN Categories c ON p.category_id = c.id
@@ -127,27 +127,26 @@ def get_post_details(post_id):
 
         row = db_cursor.fetchone()
 
-        if not row:
+        if row:
+            return json.dumps(dict(row))
+        else:
             return json.dumps({})
 
-        post = dict(row)
+
+def delete_post(post_id):
+    """Deletes a post from the database by its id."""
+    with sqlite3.connect("./db.sqlite3") as conn:
+        db_cursor = conn.cursor()
 
         db_cursor.execute(
             """
-                SELECT t.id, t.label
-                FROM Tags t
-                JOIN PostTags pt ON pt.tag_id = t.id
-                WHERE pt.post_id =?
+            DELETE FROM Posts
+            WHERE id = ?
             """,
             (post_id,),
         )
 
-        tag_rows = db_cursor.fetchall()
-
-        post["tags"] = [dict(tag) for tag in tag_rows]
-
-        return json.dumps(post)
-
+        conn.commit()
 
 def update_post_tags(post_id, tag_ids):
     with sqlite3.connect("./db.sqlite3") as conn:
@@ -172,15 +171,45 @@ def update_post_tags(post_id, tag_ids):
 
         conn.commit()
 
+def edit_post(pk, post_data):
+    with sqlite3.connect("./db.sqlite3") as conn:
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
 
-# def delete_post_tags(post_id, tag_ids):
-#     with sqlite3.connect("./db.sqlite3") as conn:
-#         conn.row_factory = sqlite3.Row
-#         db_cursor = conn.cursor()
+        db_cursor.execute("SELECT * FROM Posts WHERE id = ?", (pk,))
+        existing_post = db_cursor.fetchone()
 
-#         db_cursor.execute("""
-#             DELETE FROM PostTags
-#             WHERE post_id = ?
-#         """, (post_id,))
+        if not existing_post:
+            return False
+        
+        title = post_data.get("title") or existing_post["title"]
+        image_url = post_data.get("image_url") or existing_post["image_url"]
+        content = post_data.get("content") or existing_post["content"]
+        cat_id = post_data.get("category_id") or post_data.get("categoryId") or existing_post["category_id"]
 
-#         )
+        approved = existing_post["approved"]
+        pub_date = existing_post["publication_date"]
+
+        db_cursor.execute(
+            """
+            UPDATE Posts
+                SET
+                    title = ?,
+                    image_url = ?,
+                    content = ?,
+                    category_id = ?,
+                    approved = ?,
+                    publication_date = ?
+            WHERE id = ?
+            """,
+            (title, image_url, content, cat_id, approved, pub_date, pk),
+        )
+
+        # Check if any row was actually updated
+        rows_affected = db_cursor.rowcount
+       
+        # Always commit changes to the database
+        conn.commit()
+
+    return rows_affected > 0
+
