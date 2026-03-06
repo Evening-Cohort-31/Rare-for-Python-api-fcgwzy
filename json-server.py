@@ -18,10 +18,10 @@ from views import (
     get_post_details,
     delete_post,
     update_post_tags,
-    edit_post
-    
+    edit_post,
 )
-from views import create_comment, get_all_comments
+from views import create_comment, get_all_comments_for_post, get_all_users_comments
+
 
 class JSONServer(HandleRequests):
 
@@ -52,6 +52,7 @@ class JSONServer(HandleRequests):
             return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
         if url["requested_resource"].lower() == "categories":
+            
             if url["pk"] != 0:
                 response_body = get_single_category(url["pk"])
                 return self.response(response_body, status.HTTP_200_SUCCESS.value)
@@ -59,19 +60,15 @@ class JSONServer(HandleRequests):
             response_body = get_all_categories()
             return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
-        if url["requested_resource"].lower() == "comments":
-            response_body = get_all_comments()
-            return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
         if url["requested_resource"].lower() == "tags":
             response_body = get_all_tags()
             return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
-        
         return self.response(
-                "Resource not found",
-                status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND.value,
-            )
+            "Resource not found",
+            status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND.value,
+        )
 
     def do_PUT(self):
         """Handle PUT requests from clients"""
@@ -82,12 +79,13 @@ class JSONServer(HandleRequests):
         # Handle any "undefined" strings sent by React to avoid server crash
 
         if pk == "undefined":
-            return self.response("ID in URL is undefined", status.HTTP_400_CLIENT_ERROR_BAD_REQUEST_DATA)
+            return self.response(
+                "ID in URL is undefined", status.HTTP_400_CLIENT_ERROR_BAD_REQUEST_DATA
+            )
 
         content_len = int(self.headers.get("content-length", 0))
         raw_body = self.rfile.read(content_len)
         request_body = json.loads(raw_body)
-
 
         if resource == "posts" and pk != 0:
 
@@ -98,7 +96,9 @@ class JSONServer(HandleRequests):
 
             if success:
                 return self.response("", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY.value)
-            return self.response("Post not found", status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND)
+            return self.response(
+                "Post not found", status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND
+            )
 
         if url["requested_resource"].lower() == "categories" and url["pk"] != 0:
             content_len = int(self.headers.get("content-length", 0))
