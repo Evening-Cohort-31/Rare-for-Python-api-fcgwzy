@@ -7,7 +7,7 @@ from views import (
     get_all_categories,
     delete_category,
     update_category,
-    get_single_category,
+    get_single_category
 )
 from views import create_user, login_user, get_all_users, get_user_by_id, user_is_admin
 from views import create_comment, get_all_comments
@@ -20,6 +20,7 @@ from views import (
     delete_post,
     update_post_tags,
     edit_post,
+    get_posts_by_subscriptions,
 )
 from views import create_subscription, get_all_subscriptions
 
@@ -41,6 +42,11 @@ class JSONServer(HandleRequests):
 
         if url["requested_resource"].lower() == "posts":
             user_id = query_params.get("user_id") or query_params.get("userId")
+            follower_id = query_params.get("follower_id")
+
+            if follower_id:
+                response_body = get_posts_by_subscriptions(follower_id)
+                return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
             if user_id:
                 response_body = get_single_users_post(user_id)

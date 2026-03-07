@@ -32,41 +32,28 @@ def create_post(post):
 
 
 def get_all_posts():
-    """Returns all posts from the database."""
     with sqlite3.connect("./db.sqlite3") as conn:
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
 
-        db_cursor.execute(
-            """
-                    SELECT
-                        p.id,
-                        p.title,
-                        p.publication_date,
-                        p.image_url,
-                        p.content,
-                        p.approved,
-                        u.id,
-                        u.first_name || ' ' || u.last_name AS author,
-                        c.id AS category_id
-                    FROM Posts p
-                    JOIN Users u ON p.user_id = u.id
-                    JOIN Categories c ON p.category_id = c.id
-                    WHERE p.approved = 1
-                    AND p.publication_date <=DATETIME('now')
-                    ORDER BY p.publication_date DESC;
-                """
-        )
-
-        query_results = db_cursor.fetchall()
+        db_cursor.execute("""
+            SELECT
+                p.id,
+                p.title,
+                p.publication_date,
+                p.content,
+                p.user_id
+            FROM Posts p
+            ORDER BY p.publication_date DESC
+        """) 
 
         posts = []
-
-        for row in query_results:
+        dataset = db_cursor.fetchall()
+        for row in dataset:
+            # CHANGE 'subscriptions' to 'posts' here:
             posts.append(dict(row))
-
-        return json.dumps(posts)
-
+            
+    return json.dumps(posts)
 
 def get_single_users_post(user_id):
     """Returns all posts belonging to a specific user."""
@@ -237,3 +224,30 @@ def edit_post(pk, post_data):
         conn.commit()
 
     return rows_affected > 0
+
+def get_posts_by_subscriptions(follower_id):
+    with sqlite3.connect("./db.sqlite3") as conn:
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
+
+        db_cursor.execute("""
+            SELECT
+                p.id,
+                p.title,
+                p.publication_date,
+                p.content,
+                u.username,
+                s.follower_id
+            FROM Posts p
+            JOIN Users u ON p.user_id = u.id
+            JOIN Subscriptions s ON s.author_id = p.user_id
+            WHERE s.follower_id = ?
+            ORDER BY p.publication_date DESC
+        """, (follower_id,))
+
+        posts = []
+        dataset = db_cursor.fetchall()
+        for row in dataset:
+            posts.append(dict(row))
+            
+    return json.dumps(posts)
