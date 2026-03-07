@@ -35,7 +35,7 @@ def create_comment(comment):
         )
 
 
-def get_all_comments_for_post(pk):
+def get_all_comments_for_post(post_id):
     with sqlite3.connect("./db.sqlite3") as conn:
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
@@ -45,8 +45,8 @@ def get_all_comments_for_post(pk):
             """
             SELECT 
                 c.id,
-                c.post_id as post_id,
-                c.author_id as author_id,
+                c.post_id,
+                c.author_id,
                 c.publication_date,
                 c.subject,
                 c.content,
@@ -54,8 +54,8 @@ def get_all_comments_for_post(pk):
             FROM Comments c
             JOIN Posts p ON c.post_id = p.id
             JOIN Users u ON c.author_id = u.id
-            WHERE c.id = ?
-        """
+            WHERE c.post_id = ?
+        """, (post_id, )
         )
 
         query_results = db_cursor.fetchall()
@@ -78,8 +78,8 @@ def get_all_users_comments():
                 """
                 SELECT 
                     c.id,
-                    c.post_id as post_id,
-                    c.author_id as author_id,
+                    c.post_id,
+                    c.author_id,
                     c.publication_date,
                     c.subject,
                     c.content,
@@ -87,16 +87,12 @@ def get_all_users_comments():
                 FROM Comments c
                 JOIN Posts p ON c.post_id = p.id
                 JOIN Users u ON c.author_id = u.id
-                WHERE c.id = ?              
             """
             )
 
             query_results = db_cursor.fetchall()
 
-            comments = []
-
-            for row in query_results:
-                comments.append(dict(row))
+            comments = [dict(row) for row in query_results]
 
             return json.dumps(comments)
     

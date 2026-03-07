@@ -65,14 +65,13 @@ class JSONServer(HandleRequests):
             return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
         if url["requested_resource"].lower() == "comments":
+            post_id = query_params.get("post_id") or query_params.get("postId") or url["pk"]
 
-            post_id = query_params.get("post_id") or query_params.get("postId")
-
-            if user_id:
-                response_body = get_all_users_comments()
+            if post_id != 0:
+                response_body = get_all_comments_for_post(post_id)
                 return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
-            response_body = get_all_comments_for_post(post_id)
+            response_body = get_all_users_comments()
             return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
         return self.response(
