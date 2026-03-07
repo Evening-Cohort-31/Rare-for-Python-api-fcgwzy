@@ -32,7 +32,6 @@ def create_post(post):
 
 
 def get_all_posts():
-    """Returns all posts from the database."""
     with sqlite3.connect("./db.sqlite3") as conn:
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
@@ -62,12 +61,12 @@ def get_all_posts():
         query_results = db_cursor.fetchall()
 
         posts = []
-
-        for row in query_results:
+        dataset = db_cursor.fetchall()
+        for row in dataset:
+            # CHANGE 'subscriptions' to 'posts' here:
             posts.append(dict(row))
-
-        return json.dumps(posts)
-
+            
+    return json.dumps(posts)
 
 def get_single_users_post(user_id):
     """Returns all posts belonging to a specific user."""
@@ -241,3 +240,30 @@ def edit_post(pk, post_data):
         conn.commit()
 
     return rows_affected > 0
+
+def get_posts_by_subscriptions(follower_id):
+    with sqlite3.connect("./db.sqlite3") as conn:
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
+
+        db_cursor.execute("""
+            SELECT
+                p.id,
+                p.title,
+                p.publication_date,
+                p.content,
+                u.username,
+                s.follower_id
+            FROM Posts p
+            JOIN Users u ON p.user_id = u.id
+            JOIN Subscriptions s ON s.author_id = p.user_id
+            WHERE s.follower_id = ?
+            ORDER BY p.publication_date DESC
+        """, (follower_id,))
+
+        posts = []
+        dataset = db_cursor.fetchall()
+        for row in dataset:
+            posts.append(dict(row))
+            
+    return json.dumps(posts)
