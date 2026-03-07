@@ -36,16 +36,29 @@ def get_all_posts():
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
 
-        db_cursor.execute("""
-            SELECT
-                p.id,
-                p.title,
-                p.publication_date,
-                p.content,
-                p.user_id
-            FROM Posts p
-            ORDER BY p.publication_date DESC
-        """) 
+        db_cursor.execute(
+            """
+                    SELECT
+                        p.id,
+                        p.title,
+                        p.publication_date,
+                        p.image_url,
+                        p.content,
+                        p.approved,
+                        p.user_id,
+                        u.id,
+                        u.first_name || ' ' || u.last_name AS author,
+                        c.id AS category_id
+                    FROM Posts p
+                    JOIN Users u ON p.user_id = u.id
+                    JOIN Categories c ON p.category_id = c.id
+                    WHERE p.approved = 1
+                    AND p.publication_date <=DATETIME('now')
+                    ORDER BY p.publication_date DESC;
+                """
+        )
+
+        query_results = db_cursor.fetchall()
 
         posts = []
         dataset = db_cursor.fetchall()
@@ -70,7 +83,7 @@ def get_single_users_post(user_id):
                         p.image_url,
                         p.content,
                         p.approved,
-                        p.user_id AS user_id,
+                        p.user_id,
                         u.first_name || ' ' || u.last_name AS author,
                         c.id AS category_id
                     FROM Posts p
@@ -101,6 +114,7 @@ def get_post_details(post_id):
                 p.image_url,
                 p.content,
                 p.approved,
+                p.user_id,
                 u.first_name || ' ' || u.last_name AS author,
                 c.id AS category_id,
                 t.id AS tag_id,
@@ -120,15 +134,17 @@ def get_post_details(post_id):
         if not rows:
             return json.dumps({})
 
+        first_row = rows[0]
         post = {
-            "id": rows[0]["post_id"],
-            "title": rows[0]["title"],
-            "publication_date": rows[0]["publication_date"],
-            "image_url": rows[0]["image_url"],
-            "content": rows[0]["content"],
-            "approved": rows[0]["approved"],
-            "author": rows[0]["author"],
-            "category_id": rows[0]["category_id"],
+            "post_id": first_row["post_id"],
+            "title": first_row["title"],
+            "publication_date": first_row["publication_date"],
+            "image_url": first_row["image_url"],
+            "content": first_row["content"],
+            "approved": first_row["approved"],
+            "user_id": first_row["user_id"],
+            "author": first_row["author"],
+            "category_id": first_row["category_id"],
             "tags": [],
         }
 
