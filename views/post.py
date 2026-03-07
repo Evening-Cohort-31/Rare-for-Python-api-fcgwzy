@@ -58,8 +58,6 @@ def get_all_posts():
                 """
         )
 
-        query_results = db_cursor.fetchall()
-
         posts = []
         dataset = db_cursor.fetchall()
         for row in dataset:

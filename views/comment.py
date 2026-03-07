@@ -97,3 +97,17 @@ def get_all_users_comments():
 
             return json.dumps(comments)
     
+
+def update_comment(id, comment_data):
+    with sqlite3.connect("./db.sqlite3") as conn:
+        db_cursor = conn.cursor()
+
+        db_cursor.execute("""
+            UPDATE Comments
+            SET
+                subject = ?,
+                content = ?
+            WHERE id = ?
+        """, (comment_data['subject'], comment_data['content'], id))
+
+        return db_cursor.rowcount > 0
