@@ -10,13 +10,13 @@ def create_comment(comment):
         current_date = datetime.now().strftime("%Y-%m-%d")
         db_cursor.execute(
             """
-        Insert into Comments (post_id, author_id, publication_date, subject, content) values (?, ?, ?, ?)
+        Insert into Comments (post_id, author_id, subject, publication_date, content) values (?, ?, ?, ?, ?)
         """,
             (
                 comment["post_id"],
                 comment["author_id"],
-                current_date,
                 comment["subject"],
+                current_date,
                 comment["content"],
             ),
         )
@@ -28,8 +28,8 @@ def create_comment(comment):
                 "id": id,
                 "post_id": comment["post_id"],
                 "author_id": comment["author_id"],
-                "publication_date": current_date,
                 "subject": comment["subject"],
+                "publication_date": current_date,
                 "content": comment["content"],
             }
         )
