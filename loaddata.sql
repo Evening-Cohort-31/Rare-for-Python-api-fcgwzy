@@ -61,6 +61,7 @@ CREATE TABLE "Comments" (
   "id" INTEGER PRIMARY KEY AUTOINCREMENT,
   "post_id" INTEGER,
   "author_id" INTEGER,
+  "subject" varchar,
   "publication_date" date,
   "content" varchar,
   FOREIGN KEY(`post_id`) REFERENCES `Posts`(`id`),
@@ -198,14 +199,14 @@ VALUES
  INSERT INTO Categories ('label') VALUES ('Tech');
  INSERT INTO Categories ('label') VALUES ('Software');
 
-INSERT INTO "Comments" ("post_id", "author_id", "publication_date", "content")
-VALUES (1, 1, '2026-02-20', 'This is a great post! Thanks for sharing.');
+INSERT INTO "Comments" ("post_id", "author_id", "subject", "publication_date", "content")
+VALUES (1, 1,'"WOW!', '2026-02-20', 'This is a great post! Thanks for sharing.');
 
-INSERT INTO "Comments" ("post_id", "author_id", "publication_date", "content")
-VALUES (1, 2, '2026-02-21', 'I disagree with the second paragraph, but overall good read.');
+INSERT INTO "Comments" ("post_id", "author_id", "subject", "publication_date", "content")
+VALUES (1, 2, 'Hmm', '2026-02-21', 'I disagree with the second paragraph, but overall good read.');
 
-INSERT INTO "Comments" ("post_id", "author_id", "publication_date", "content")
-VALUES (2, 1, '2026-02-22', 'Does anyone know if there will be a part 2 to this?');
+INSERT INTO "Comments" ("post_id", "author_id", "subject", "publication_date", "content")
+VALUES (2, 1, 'Update?', '2026-02-22', 'Does anyone know if there will be a part 2 to this?');
 INSERT INTO "Tags" ("label") VALUES ('CSS');
 INSERT INTO "Tags" ("label") VALUES ('SQL');
 INSERT INTO "Tags" ("label") VALUES ('Node.js');
