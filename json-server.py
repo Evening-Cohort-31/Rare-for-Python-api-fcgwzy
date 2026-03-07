@@ -9,8 +9,9 @@ from views import (
     update_category,
     get_single_category,
 )
-from views import create_user, login_user, get_all_users, user_is_admin
-from views import create_tag, get_all_tags, delete_tag
+from views import create_user, login_user, get_all_users, get_user_by_id, user_is_admin
+from views import create_comment, get_all_comments
+from views import create_tag, get_all_tags, delete_tag, update_tag
 from views import (
     create_post,
     get_all_posts,
@@ -23,6 +24,7 @@ from views import (
 from views import create_comment, get_all_comments_for_post, get_all_users_comments
 
 
+
 class JSONServer(HandleRequests):
 
     def do_GET(self):
@@ -31,23 +33,24 @@ class JSONServer(HandleRequests):
         query_params = url.get("query_params", {})
 
         if url["requested_resource"].lower() == "users":
+            if url["pk"] != 0:
+                response_body = get_user_by_id(url["pk"])
+                return self.response(response_body, status.HTTP_200_SUCCESS.value)
+
             response_body = get_all_users(query_params)
             return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
         if url["requested_resource"].lower() == "posts":
-            # Look for both variations of the key
             user_id = query_params.get("user_id") or query_params.get("userId")
 
             if user_id:
                 response_body = get_single_users_post(user_id)
                 return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
-            # Only treat as /posts/<id> if no user_id filter is present
             if url["pk"] != 0:
                 response_body = get_post_details(url["pk"])
                 return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
-            # Otherwise, return all
             response_body = get_all_posts()
             return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
@@ -74,7 +77,11 @@ class JSONServer(HandleRequests):
             response_body = get_all_users_comments()
             return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
+
         return self.response(
+            "Resource not found",
+            status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND.value,
+        )
             "Resource not found",
             status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND.value,
         )
@@ -85,9 +92,10 @@ class JSONServer(HandleRequests):
         pk = url.get("pk")
         resource = url.get("requested_resource").lower()
 
-        # Handle any "undefined" strings sent by React to avoid server crash
-
         if pk == "undefined":
+            return self.response(
+                "ID in URL is undefined", status.HTTP_400_CLIENT_ERROR_BAD_REQUEST_DATA
+            )
             return self.response(
                 "ID in URL is undefined", status.HTTP_400_CLIENT_ERROR_BAD_REQUEST_DATA
             )
@@ -97,7 +105,6 @@ class JSONServer(HandleRequests):
         request_body = json.loads(raw_body)
 
         if resource == "posts" and pk != 0:
-
             success = edit_post(pk, request_body)
 
             tag_ids = request_body.get("tag_ids", [])
@@ -105,6 +112,9 @@ class JSONServer(HandleRequests):
 
             if success:
                 return self.response("", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY.value)
+            return self.response(
+                "Post not found", status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND
+            )
             return self.response(
                 "Post not found", status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND
             )
@@ -118,6 +128,28 @@ class JSONServer(HandleRequests):
 
             return self.response("", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY.value)
 
+        elif url["requested_resource"].lower() == "tags" and url["pk"] != 0:
+
+            auth_header = self.headers.get("Authorization")
+
+            if not auth_header:
+                return self.response("Unauthorized", 401)
+
+            try:
+                token = auth_header.split(" ")[1]
+                user_id = int(token)
+            except (IndexError, ValueError, TypeError):
+                return self.response("Invalid Authorization Header", 401)
+
+            if not user_is_admin(user_id):
+                return self.response("Forbidden: Admins only", 403)
+
+            success = update_tag(url["pk"], request_body)
+
+            if success:
+                return self.response("", 204)
+            else:
+                return self.response("Not Found", 404)
         else:
             return self.response(
                 "Resource not found",
@@ -156,7 +188,8 @@ class JSONServer(HandleRequests):
 
             try:
                 token = auth_header.split(" ")[1]
-            except IndexError:
+                user_id = int(token)
+            except (IndexError, ValueError, TypeError):
                 return self.response("Invalid Authorization Header", 401)
 
             if not user_is_admin(token):

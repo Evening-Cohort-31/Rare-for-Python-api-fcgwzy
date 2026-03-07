@@ -102,37 +102,56 @@ def get_single_users_post(user_id):
 
 
 def get_post_details(post_id):
-    """Returns the details of a single post by its id."""
     with sqlite3.connect("./db.sqlite3") as conn:
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
 
         db_cursor.execute(
             """
-                    SELECT
-                        p.id AS post_id,
-                        p.title,
-                        p.publication_date,
-                        p.image_url,
-                        p.content,
-                        p.approved,
-                        p.user_id,
-                        u.first_name || ' ' || u.last_name AS author,
-                        c.id AS category_id
-                    FROM Posts p
-                    JOIN Users u ON p.user_id = u.id
-                    JOIN Categories c ON p.category_id = c.id
-                    WHERE p.id = ?
-                """,
+            SELECT
+                p.id AS post_id,
+                p.title,
+                p.publication_date,
+                p.image_url,
+                p.content,
+                p.approved,
+                p.user_id,
+                u.first_name || ' ' || u.last_name AS author,
+                c.id AS category_id,
+                t.id AS tag_id,
+                t.label AS tag_label
+            FROM Posts p
+            JOIN Users u ON p.user_id = u.id
+            JOIN Categories c ON p.category_id = c.id
+            LEFT JOIN PostTags pt ON pt.post_id = p.id
+            LEFT JOIN Tags t ON t.id = pt.tag_id
+            WHERE p.id = ?
+        """,
             (post_id,),
         )
 
-        row = db_cursor.fetchone()
+        rows = db_cursor.fetchall()
 
-        if row:
-            return json.dumps(dict(row))
-        else:
+        if not rows:
             return json.dumps({})
+
+        post = {
+            "id": rows[0]["post_id"],
+            "title": rows[0]["title"],
+            "publication_date": rows[0]["publication_date"],
+            "image_url": rows[0]["image_url"],
+            "content": rows[0]["content"],
+            "approved": rows[0]["approved"],
+            "author": rows[0]["author"],
+            "category_id": rows[0]["category_id"],
+            "tags": [],
+        }
+
+        for row in rows:
+            if row["tag_id"]:
+                post["tags"].append({"id": row["tag_id"], "label": row["tag_label"]})
+
+        return json.dumps(post)
 
 
 def delete_post(post_id):
@@ -149,6 +168,7 @@ def delete_post(post_id):
         )
 
         conn.commit()
+
 
 def update_post_tags(post_id, tag_ids):
     with sqlite3.connect("./db.sqlite3") as conn:
@@ -173,6 +193,7 @@ def update_post_tags(post_id, tag_ids):
 
         conn.commit()
 
+
 def edit_post(pk, post_data):
     with sqlite3.connect("./db.sqlite3") as conn:
         conn.row_factory = sqlite3.Row
@@ -183,11 +204,15 @@ def edit_post(pk, post_data):
 
         if not existing_post:
             return False
-        
+
         title = post_data.get("title") or existing_post["title"]
         image_url = post_data.get("image_url") or existing_post["image_url"]
         content = post_data.get("content") or existing_post["content"]
-        cat_id = post_data.get("category_id") or post_data.get("categoryId") or existing_post["category_id"]
+        cat_id = (
+            post_data.get("category_id")
+            or post_data.get("categoryId")
+            or existing_post["category_id"]
+        )
 
         approved = existing_post["approved"]
         pub_date = existing_post["publication_date"]
@@ -209,9 +234,8 @@ def edit_post(pk, post_data):
 
         # Check if any row was actually updated
         rows_affected = db_cursor.rowcount
-       
+
         # Always commit changes to the database
         conn.commit()
 
     return rows_affected > 0
-
