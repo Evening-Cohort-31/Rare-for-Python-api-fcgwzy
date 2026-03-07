@@ -10,7 +10,6 @@ from views import (
     get_single_category,
 )
 from views import create_user, login_user, get_all_users, get_user_by_id, user_is_admin
-from views import create_comment, get_all_comments
 from views import create_tag, get_all_tags, delete_tag, update_tag
 from views import (
     create_post,
@@ -79,9 +78,6 @@ class JSONServer(HandleRequests):
 
 
         return self.response(
-            "Resource not found",
-            status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND.value,
-        )
             "Resource not found",
             status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND.value,
         )

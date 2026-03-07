@@ -135,15 +135,17 @@ def get_post_details(post_id):
         if not rows:
             return json.dumps({})
 
+        first_row = rows[0]
         post = {
-            "id": rows[0]["post_id"],
-            "title": rows[0]["title"],
-            "publication_date": rows[0]["publication_date"],
-            "image_url": rows[0]["image_url"],
-            "content": rows[0]["content"],
-            "approved": rows[0]["approved"],
-            "author": rows[0]["author"],
-            "category_id": rows[0]["category_id"],
+            "post_id": first_row["post_id"],
+            "title": first_row["title"],
+            "publication_date": first_row["publication_date"],
+            "image_url": first_row["image_url"],
+            "content": first_row["content"],
+            "approved": first_row["approved"],
+            "user_id": first_row["user_id"],
+            "author": first_row["author"],
+            "category_id": first_row["category_id"],
             "tags": [],
         }
 
