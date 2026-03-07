@@ -55,6 +55,7 @@ def get_all_comments_for_post(post_id):
             JOIN Posts p ON c.post_id = p.id
             JOIN Users u ON c.author_id = u.id
             WHERE c.post_id = ?
+            ORDER BY c.publication_date DESC
         """, (post_id, )
         )
 
