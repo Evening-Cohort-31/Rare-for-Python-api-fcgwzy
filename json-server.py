@@ -22,6 +22,7 @@ from views import (
 )
 from views import create_comment, get_all_comments_for_post, get_all_users_comments
 
+from views import create_subscription, get_all_subscriptions
 
 
 class JSONServer(HandleRequests):
@@ -64,6 +65,10 @@ class JSONServer(HandleRequests):
 
         if url["requested_resource"].lower() == "tags":
             response_body = get_all_tags()
+            return self.response(response_body, status.HTTP_200_SUCCESS.value)
+        
+        if url["requested_resource"].lower() == "subscriptions":
+            response_body = get_all_subscriptions()
             return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
         if url["requested_resource"].lower() == "comments":
@@ -239,6 +244,10 @@ class JSONServer(HandleRequests):
 
         if resource == "posts":
             response_json = create_post(request_body)
+            return self.response(response_json, status.HTTP_201_SUCCESS_CREATED.value)
+        
+        if resource == "subscriptions":
+            response_json = create_subscription(request_body)
             return self.response(response_json, status.HTTP_201_SUCCESS_CREATED.value)
 
         return self.response(
