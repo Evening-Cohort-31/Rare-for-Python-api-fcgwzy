@@ -35,7 +35,7 @@ def create_comment(comment):
         )
 
 
-def get_all_comments_for_post():
+def get_all_comments_for_post(pk):
     with sqlite3.connect("./db.sqlite3") as conn:
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
