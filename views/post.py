@@ -38,29 +38,30 @@ def get_all_posts():
 
         db_cursor.execute(
             """
-                    SELECT
-                        p.id,
-                        p.title,
-                        p.publication_date,
-                        p.image_url,
-                        p.content,
-                        p.approved,
-                        p.user_id,
-                        u.id,
-                        u.first_name || ' ' || u.last_name AS author,
-                        c.id AS category_id
-                    FROM Posts p
-                    JOIN Users u ON p.user_id = u.id
-                    JOIN Categories c ON p.category_id = c.id
-                    WHERE p.approved = 1
-                    AND p.publication_date <=DATETIME('now')
-                    ORDER BY p.publication_date DESC;
-                """
+            SELECT
+                p.id,
+                p.title,
+                p.publication_date,
+                p.image_url,
+                p.content,
+                p.approved,
+                p.user_id,
+                u.first_name || ' ' || u.last_name AS author,
+                c.label AS category
+            FROM Posts p
+            JOIN Users u ON p.user_id = u.id
+            JOIN Categories c ON p.category_id = c.id
+            WHERE p.approved = 1
+            AND p.publication_date <= DATETIME('now')
+            ORDER BY p.publication_date DESC;
+            """
         )
-        posts = []
+
+        # ONLY CALL THIS ONCE
         dataset = db_cursor.fetchall()
+
+        posts = []
         for row in dataset:
-            # CHANGE 'subscriptions' to 'posts' here:
             posts.append(dict(row))
             
     return json.dumps(posts)
