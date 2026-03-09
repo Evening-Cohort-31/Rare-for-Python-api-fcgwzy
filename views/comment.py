@@ -10,13 +10,13 @@ def create_comment(comment):
         current_date = datetime.now().strftime("%Y-%m-%d")
         db_cursor.execute(
             """
-        Insert into Comments (post_id, author_id, publication_date, subject, content) values (?, ?, ?, ?)
+        Insert into Comments (post_id, author_id, subject, publication_date, content) values (?, ?, ?, ?, ?)
         """,
             (
                 comment["post_id"],
                 comment["author_id"],
-                current_date,
                 comment["subject"],
+                current_date,
                 comment["content"],
             ),
         )
@@ -28,8 +28,8 @@ def create_comment(comment):
                 "id": id,
                 "post_id": comment["post_id"],
                 "author_id": comment["author_id"],
-                "publication_date": current_date,
                 "subject": comment["subject"],
+                "publication_date": current_date,
                 "content": comment["content"],
             }
         )
@@ -97,3 +97,30 @@ def get_all_users_comments():
 
             return json.dumps(comments)
     
+
+def update_comment(id, comment_data):
+    with sqlite3.connect("./db.sqlite3") as conn:
+        db_cursor = conn.cursor()
+
+        db_cursor.execute("""
+            UPDATE Comments
+            SET
+                subject = ?,
+                content = ?
+            WHERE id = ?
+        """, (comment_data['subject'], comment_data['content'], id))
+
+        return db_cursor.rowcount > 0
+    
+def delete_comment(pk):
+    with sqlite3.connect("./db.sqlite3") as conn:
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
+
+        # Write the SQL query to delete the chosen order
+        db_cursor.execute(""" 
+        DELETE FROM Comments WHERE id = ?
+        """, (pk,))
+        number_of_rows_deleted = db_cursor.rowcount
+    
+    return True if number_of_rows_deleted > 0 else False
