@@ -26,6 +26,7 @@ from views import (
     get_all_comments_for_post,
     get_all_users_comments,
     update_comment,
+    delete_comment
 )
 
 from views import create_subscription, get_all_subscriptions
@@ -217,6 +218,18 @@ class JSONServer(HandleRequests):
                 return self.response("", 204)
             else:
                 return self.response("Not Found", 404)
+            
+        elif url["requested_resource"].lower() == "comments":
+            if pk != 0:
+                successfully_deleted = delete_comment(pk)
+                if successfully_deleted:
+                    return self.response(
+                        "", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY.value
+                    )
+                return self.response(
+                    "Resource not found",
+                    status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND.value,
+                )
 
         return self.response(
             "Resource not found",
