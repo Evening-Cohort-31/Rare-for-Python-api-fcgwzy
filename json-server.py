@@ -223,7 +223,19 @@ class JSONServer(HandleRequests):
             return self.response(response_json, status.HTTP_201_SUCCESS_CREATED.value)
 
         if resource == "posts":
-            response_json = create_post(request_body)
+
+            auth_header = self.headers.get("Authorization")
+
+            if not auth_header:
+                return self.response("Unauthorized", 401)
+
+            try:
+                token = auth_header.split(" ")[1]
+                user_id = int(token)
+            except (IndexError, ValueError, TypeError):
+                return self.response("Invalid Authorization Header", 401)
+
+            response_json = create_post(request_body, user_id)
             return self.response(response_json, status.HTTP_201_SUCCESS_CREATED.value)
 
         return self.response(
