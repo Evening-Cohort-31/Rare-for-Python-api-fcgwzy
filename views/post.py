@@ -3,26 +3,29 @@
 import sqlite3
 import json
 from datetime import datetime
+from .user import user_is_admin
 
 
-def create_post(post):
+def create_post(post, user_id):
     """Inserts a new post into the database."""
     with sqlite3.connect("./db.sqlite3") as conn:
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
 
+        approved = 1 if user_is_admin(user_id) else 0
+
         db_cursor.execute(
             """
-        Insert into Posts (user_id, category_id, title, publication_date, image_url, content, approved) values (?, ?, ?, ?, ?, ?, ?)
+        Insert into Posts (user_id, category_id, title, publication_date, image_url, content, approved) VALUES (?, ?, ?, ?, ?, ?, ?)
         """,
             (
-                post["user_id"],
+                user_id,
                 post["category_id"],
                 post["title"],
                 datetime.now(),
                 post.get("image_url", ""),
                 post["content"],
-                1,
+                approved,
             ),
         )
 
