@@ -256,6 +256,7 @@ def get_posts_by_subscriptions(follower_id):
             JOIN Users u ON p.user_id = u.id
             JOIN Subscriptions s ON s.author_id = p.user_id
             WHERE s.follower_id = ?
+            AND s.end_datetime = NULL
             ORDER BY p.publication_date DESC
         """, (follower_id,))
 
