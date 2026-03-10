@@ -1,4 +1,4 @@
-from .user import create_user, login_user, get_all_users, user_is_admin, get_user_by_id
+from .user import create_user, login_user, get_all_users, get_user_by_id, update_user, user_is_admin
 from .category import (
     create_category,
     get_all_categories,

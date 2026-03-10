@@ -139,3 +139,20 @@ def user_is_admin(user_id):
             return False
 
         return user["is_admin"] == 1
+    
+
+def update_user(user_id, user_data):
+    with sqlite3.connect("./db.sqlite3") as conn:
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
+
+        db_cursor.execute(
+            """
+            UPDATE Users
+            SET is_admin = ?
+            WHERE id = ?
+            """,
+            (user_data["is_admin"], user_id),
+        )
+
+        return db_cursor.rowcount > 0
