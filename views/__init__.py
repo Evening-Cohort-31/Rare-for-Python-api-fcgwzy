@@ -15,5 +15,7 @@ from .post import (
     delete_post,
     update_post_tags,
     edit_post,
+    get_posts_by_subscriptions,
 )
-from .comment import create_comment, get_all_comments
+from .comment import create_comment, get_all_comments_for_post, get_all_users_comments, update_comment, delete_comment
+from .subscription import get_all_subscriptions, create_subscription
