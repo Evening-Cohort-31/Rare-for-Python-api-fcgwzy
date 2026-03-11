@@ -20,6 +20,8 @@ from views import (
     update_post_tags,
     edit_post,
     get_posts_by_subscriptions,
+    search_posts,
+    search_posts_by_tag,
 )
 from views import (
     create_comment,
@@ -53,6 +55,14 @@ class JSONServer(HandleRequests):
 
             user_id = query_params.get("user_id") or query_params.get("userId")
             follower_id = query_params.get("follower_id")
+
+            if "search" in query_params: 
+                response_body = search_posts(query_params["search"])
+                return self.response(response_body, status.HTTP_200_SUCCESS.value)
+            
+            if "tag" in query_params:
+                response_body = search_posts_by_tag(query_params["tag"])
+                return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
             if follower_id:
                 response_body = get_posts_by_subscriptions(follower_id)
