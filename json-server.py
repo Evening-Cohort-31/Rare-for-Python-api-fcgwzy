@@ -9,7 +9,14 @@ from views import (
     update_category,
     get_single_category,
 )
-from views import create_user, login_user, get_all_users, get_user_by_id, update_user, user_is_admin
+from views import (
+    create_user,
+    login_user,
+    get_all_users,
+    get_user_by_id,
+    update_user,
+    user_is_admin,
+)
 from views import create_tag, get_all_tags, delete_tag, update_tag
 from views import (
     create_post,
@@ -26,7 +33,7 @@ from views import (
     get_all_comments_for_post,
     get_all_users_comments,
     update_comment,
-    delete_comment
+    delete_comment,
 )
 from views import create_subscription, get_all_subscriptions
 
@@ -50,18 +57,26 @@ class JSONServer(HandleRequests):
                 response_body = get_post_details(url["pk"])
                 return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
-            user_id = query_params.get("user_id") or query_params.get("userId")
-            follower_id = query_params.get("follower_id")
+            auth_header = self.headers.get("Authorization")
+            user_id = None
+            if auth_header:
+                try:
+                    token = auth_header.split(" ")[1]
+                    user_id = int(token)
+                except (IndexError, ValueError, TypeError):
+                    return self.response("Invalid Authorization Header", 401)
 
+            follower_id = query_params.get("follower_id")
             if follower_id:
                 response_body = get_posts_by_subscriptions(follower_id)
                 return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
-            if user_id:
-                response_body = get_single_users_post(user_id)
+            query_user_id = query_params.get("user_id") or query_params.get("userId")
+            if query_user_id:
+                response_body = get_single_users_post(query_user_id)
                 return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
-            response_body = get_all_posts()
+            response_body = get_all_posts(user_id)
             return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
         if url["requested_resource"].lower() == "categories":

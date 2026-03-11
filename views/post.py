@@ -34,40 +34,61 @@ def create_post(post, user_id):
         return json.dumps({"id": new_post_id})
 
 
-def get_all_posts():
+def get_all_posts(user_id):
     with sqlite3.connect("./db.sqlite3") as conn:
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
 
-        db_cursor.execute(
-            """
-            SELECT
-                p.id,
-                p.title,
-                p.publication_date,
-                p.image_url,
-                p.content,
-                p.approved,
-                p.user_id,
-                u.first_name || ' ' || u.last_name AS author,
-                c.label AS category
-            FROM Posts p
-            JOIN Users u ON p.user_id = u.id
-            JOIN Categories c ON p.category_id = c.id
-            WHERE p.approved = 1
-            AND p.publication_date <= DATETIME('now')
-            ORDER BY p.publication_date DESC;
-            """
-        )
+        if user_is_admin(user_id):
+            db_cursor.execute(
+                """
+                SELECT
+                    p.id,
+                    p.title,
+                    p.publication_date,
+                    p.image_url,
+                    p.content,
+                    p.approved,
+                    p.user_id,
+                    u.first_name || ' ' || u.last_name AS author,
+                    c.label AS category
+                FROM Posts p
+                JOIN Users u ON p.user_id = u.id
+                JOIN Categories c ON p.category_id = c.id
+                ORDER BY p.publication_date DESC;
+                """
+            )
+        else:
+            db_cursor.execute(
+                """
+                SELECT
+                    p.id,
+                    p.title,
+                    p.publication_date,
+                    p.image_url,
+                    p.content,
+                    p.approved,
+                    p.user_id,
+                    u.first_name || ' ' || u.last_name AS author,
+                    c.label AS category
+                FROM Posts p
+                JOIN Users u ON p.user_id = u.id
+                JOIN Categories c ON p.category_id = c.id
+                WHERE p.approved = 1
+                AND p.publication_date <= DATETIME('now')
+                ORDER BY p.publication_date DESC;
+                """
+            )
 
-        # ONLY CALL THIS ONCE
+            # ONLY CALL THIS ONCE
         dataset = db_cursor.fetchall()
 
         posts = []
         for row in dataset:
             posts.append(dict(row))
-            
-    return json.dumps(posts)
+
+        return json.dumps(posts)
+
 
 def get_single_users_post(user_id):
     """Returns all posts belonging to a specific user."""
@@ -216,7 +237,7 @@ def edit_post(pk, post_data):
             or existing_post["category_id"]
         )
 
-        approved = existing_post["approved"]
+        approved = post_data.get("approved", existing_post["approved"])
         pub_date = existing_post["publication_date"]
 
         db_cursor.execute(
@@ -242,12 +263,14 @@ def edit_post(pk, post_data):
 
     return rows_affected > 0
 
+
 def get_posts_by_subscriptions(follower_id):
     with sqlite3.connect("./db.sqlite3") as conn:
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
 
-        db_cursor.execute("""
+        db_cursor.execute(
+            """
             SELECT
                 p.id,
                 p.title,
@@ -260,11 +283,28 @@ def get_posts_by_subscriptions(follower_id):
             JOIN Subscriptions s ON s.author_id = p.user_id
             WHERE s.follower_id = ?
             ORDER BY p.publication_date DESC
-        """, (follower_id,))
+        """,
+            (follower_id,),
+        )
 
         posts = []
         dataset = db_cursor.fetchall()
         for row in dataset:
             posts.append(dict(row))
-            
+
     return json.dumps(posts)
+
+
+def approve_post(post_id):
+    with sqlite3.connect("./db.sqlite3") as conn:
+        db_cursor = conn.cursor()
+        db_cursor.execute(
+            """
+            UPDATE Posts
+            SET approved = 1
+            WHERE id = ?
+            """,
+            (post_id,),
+        )
+        conn.commit()
+        return db_cursor.rowcount > 0
