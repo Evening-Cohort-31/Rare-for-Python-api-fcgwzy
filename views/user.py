@@ -153,8 +153,8 @@ def update_user(user_id, user_data):
         if current_user is None:
             return False
         
-        new_is_admin = user_data.get("is_admin", current_user["is_admin"])
-        new_active = user_data.get("active", current_user["active"])
+        new_is_admin = user_data["is_admin"] if "is_admin" in user_data else current_user["is_admin"]
+        new_active = user_data["active"] if "active" in user_data else current_user["active"]
 
         db_cursor.execute(
             """
@@ -166,6 +166,8 @@ def update_user(user_id, user_data):
             """,
             (new_is_admin, new_active, user_id),
         )
+
+        conn.commit();
 
         return db_cursor.rowcount > 0
 

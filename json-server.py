@@ -141,7 +141,9 @@ class JSONServer(HandleRequests):
             return self.response("", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY.value)
 
         if resource == "users" and pk != 0:
-            if "profile_image_url" in request_body:
+            if "active" in request_body or "is_admin" in request_body:
+                success = update_user(pk, request_body)
+            elif "profile_image_url" in request_body:
                 success = update_user_avatar(pk, request_body)
             else:
                 success = update_user(pk, request_body)
