@@ -57,9 +57,6 @@ class JSONServer(HandleRequests):
             return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
         if url["requested_resource"].lower() == "posts":
-            user_id = query_params.get("user_id") or query_params.get("userId")
-            follower_id = query_params.get("follower_id")
-
             if url["pk"] != 0:
                 response_body = get_post_details(url["pk"])
                 return self.response(response_body, status.HTTP_200_SUCCESS.value)
@@ -73,10 +70,6 @@ class JSONServer(HandleRequests):
                 except (IndexError, ValueError, TypeError):
                     return self.response("Invalid Authorization Header", 401)
 
-            follower_id = query_params.get("follower_id")
-            user_id = query_params.get("user_id") or query_params.get("userId")
-            follower_id = query_params.get("follower_id")
-
             if "search" in query_params:
                 response_body = search_posts(query_params["search"])
                 return self.response(response_body, status.HTTP_200_SUCCESS.value)
@@ -85,6 +78,7 @@ class JSONServer(HandleRequests):
                 response_body = search_posts_by_tag(query_params["tag"])
                 return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
+            follower_id = query_params.get("follower_id")
             if follower_id:
                 response_body = get_posts_by_subscriptions(follower_id)
                 return self.response(response_body, status.HTTP_200_SUCCESS.value)
