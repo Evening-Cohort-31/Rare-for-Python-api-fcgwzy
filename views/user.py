@@ -146,15 +146,26 @@ def update_user(user_id, user_data):
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
 
+        db_cursor.execute("SELECT is_admin, active FROM Users WHERE id = ?", (user_id,))
+        current_user = db_cursor.fetchone()
+
+        if current_user is None:
+            return False
+        
+        new_is_admin = user_data["is_admin"] if "is_admin" in user_data else current_user["is_admin"]
+        new_active = user_data["active"] if "active" in user_data else current_user["active"]
+
         db_cursor.execute(
             """
             UPDATE Users
-            SET is_admin = ?
+            SET is_admin = ?,
+            active = ?
             WHERE id = ?
             """,
-            (user_data["is_admin"], user_id),
+            (new_is_admin, new_active, user_id),
         )
 
+        conn.commit()
         return db_cursor.rowcount > 0
 
 
