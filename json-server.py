@@ -28,7 +28,7 @@ from views import (
     update_comment,
     delete_comment
 )
-from views import create_subscription, get_all_subscriptions
+from views import create_subscription, get_all_subscriptions, end_subscription
 
 
 class JSONServer(HandleRequests):
@@ -47,12 +47,12 @@ class JSONServer(HandleRequests):
             return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
         if url["requested_resource"].lower() == "posts":
+            user_id = query_params.get("user_id") or query_params.get("userId")
+            follower_id = query_params.get("follower_id")
+
             if url["pk"] != 0:
                 response_body = get_post_details(url["pk"])
                 return self.response(response_body, status.HTTP_200_SUCCESS.value)
-
-            user_id = query_params.get("user_id") or query_params.get("userId")
-            follower_id = query_params.get("follower_id")
 
             if follower_id:
                 response_body = get_posts_by_subscriptions(follower_id)
@@ -77,7 +77,7 @@ class JSONServer(HandleRequests):
             return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
         if url["requested_resource"].lower() == "subscriptions":
-            response_body = get_all_subscriptions()
+            response_body = get_all_subscriptions(query_params)
             return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
         if url["requested_resource"].lower() == "comments":
@@ -105,6 +105,13 @@ class JSONServer(HandleRequests):
             return self.response(
                 "ID in URL is undefined", status.HTTP_400_CLIENT_ERROR_BAD_REQUEST_DATA
             )
+        
+        if resource == "subscriptions":
+            success = end_subscription(pk)
+        
+            if success:
+                return self.response("", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY.value)
+            return self.response("Subscription not found", status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND.value)
 
         content_len = int(self.headers.get("content-length", 0))
         raw_body = self.rfile.read(content_len)
@@ -159,6 +166,7 @@ class JSONServer(HandleRequests):
             if success:
                 return self.response("", 204)
             return self.response("Not Found", 404)
+
 
         return self.response(
             "Resource not found",
