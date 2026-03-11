@@ -22,7 +22,7 @@ def create_subscription(subscription):
 
     return json.dumps(subscription)
 
-def get_all_subscriptions():
+def get_all_subscriptions(query_params):
     with sqlite3.connect("./db.sqlite3") as conn:
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
@@ -32,7 +32,8 @@ def get_all_subscriptions():
             s.id,
             s.follower_id,
             s.author_id,
-            s.created_on
+            s.created_on,
+            s.end_datetime
         FROM Subscriptions s
         """)
 
@@ -43,3 +44,15 @@ def get_all_subscriptions():
             subscriptions.append(dict(row))
 
     return json.dumps(subscriptions)
+
+def end_subscription(pk):
+    with sqlite3.connect("./db.sqlite3") as conn:
+        db_cursor = conn.cursor()
+
+        db_cursor.execute("""
+            UPDATE Subscriptions
+            SET end_datetime = DATETIME('now')
+            WHERE id = ?
+        """, (pk,))
+
+        return db_cursor.rowcount > 0
