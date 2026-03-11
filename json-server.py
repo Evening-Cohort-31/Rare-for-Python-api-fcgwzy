@@ -71,11 +71,17 @@ class JSONServer(HandleRequests):
                     return self.response("Invalid Authorization Header", 401)
 
             if "search" in query_params:
-                response_body = search_posts(query_params["search"])
+                user_id = query_params.get("user_id")
+                if user_id:
+                    user_id = int(user_id)
+                response_body = search_posts(query_params["search"], user_id)
                 return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
             if "tag" in query_params:
-                response_body = search_posts_by_tag(query_params["tag"])
+                user_id = query_params.get("user_id")
+                if user_id:
+                    user_id = int(user_id)
+                response_body = search_posts_by_tag(query_params["tag"], user_id)
                 return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
             follower_id = query_params.get("follower_id")

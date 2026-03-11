@@ -323,6 +323,7 @@ def search_posts(search_term, user_id):
                     p.id,
                     p.title,
                     p.publication_date,
+                    p.approved,
                     u.first_name || ' ' || u.last_name AS author
                 FROM Posts p
                 JOIN Users u ON p.user_id = u.id
@@ -338,6 +339,7 @@ def search_posts(search_term, user_id):
                     p.id,
                     p.title,
                     p.publication_date,
+                    p.approved,
                     u.first_name || ' ' || u.last_name AS author
                 FROM Posts p
                 JOIN Users u ON p.user_id = u.id
@@ -364,6 +366,7 @@ def search_posts_by_tag(tag_label, user_id):
                     p.id,
                     p.title,
                     p.publication_date,
+                    p.approved,
                     u.first_name || ' ' || u.last_name AS author
                 FROM Posts p
                 JOIN Users u ON p.user_id = u.id
@@ -381,6 +384,7 @@ def search_posts_by_tag(tag_label, user_id):
                     p.id,
                     p.title,
                     p.publication_date,
+                    p.approved,
                     u.first_name || ' ' || u.last_name AS author
                 FROM Posts p
                 JOIN Users u ON p.user_id = u.id
