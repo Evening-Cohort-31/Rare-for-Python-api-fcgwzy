@@ -4,6 +4,7 @@ from .user import (
     get_all_users,
     get_user_by_id,
     update_user,
+    update_user_avatar,
     user_is_admin,
 )
 from .category import (
@@ -32,4 +33,4 @@ from .comment import (
     update_comment,
     delete_comment,
 )
-from .subscription import get_all_subscriptions, create_subscription
+from .subscription import get_all_subscriptions, create_subscription, end_subscription

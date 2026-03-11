@@ -40,7 +40,8 @@ CREATE TABLE "Subscriptions" (
   "id" INTEGER PRIMARY KEY AUTOINCREMENT,
   "follower_id" INTEGER,
   "author_id" INTEGER,
-  "created_on" date,
+  "created_on" DATETIME,
+  "end_datetime" DATETIME,
   FOREIGN KEY(`follower_id`) REFERENCES `Users`(`id`),
   FOREIGN KEY(`author_id`) REFERENCES `Users`(`id`)
 );
@@ -212,3 +213,4 @@ INSERT INTO "Tags" ("label") VALUES ('SQL');
 INSERT INTO "Tags" ("label") VALUES ('Node.js');
 INSERT INTO "Tags" ("label") VALUES ('Web Security');
 INSERT INTO "Tags" ("label") VALUES ('Project Management');
+
