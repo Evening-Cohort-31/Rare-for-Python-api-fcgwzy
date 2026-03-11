@@ -9,7 +9,7 @@ from views import (
     update_category,
     get_single_category,
 )
-from views import create_user, login_user, get_all_users, get_user_by_id, update_user, user_is_admin
+from views import create_user, login_user, get_all_users, get_user_by_id, update_user, update_user_avatar, user_is_admin
 from views import create_tag, get_all_tags, delete_tag, update_tag
 from views import (
     create_post,
@@ -42,6 +42,7 @@ class JSONServer(HandleRequests):
             if url["pk"] != 0:
                 response_body = get_user_by_id(url["pk"])
                 return self.response(response_body, status.HTTP_200_SUCCESS.value)
+
             response_body = get_all_users(query_params)
             return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
@@ -133,7 +134,10 @@ class JSONServer(HandleRequests):
             return self.response("", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY.value)
 
         if resource == "users" and pk != 0:
-            success = update_user(pk, request_body)
+            if "profile_image_url" in request_body:
+                success = update_user_avatar(pk, request_body)
+            else:
+                success = update_user(pk, request_body)
             if success:
                 return self.response("", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY.value)
             return self.response(
@@ -255,18 +259,14 @@ class JSONServer(HandleRequests):
             return self.response(response_json, status.HTTP_201_SUCCESS_CREATED.value)
 
         if resource == "posts":
-
             auth_header = self.headers.get("Authorization")
-
             if not auth_header:
                 return self.response("Unauthorized", 401)
-
             try:
                 token = auth_header.split(" ")[1]
                 user_id = int(token)
             except (IndexError, ValueError, TypeError):
                 return self.response("Invalid Authorization Header", 401)
-
             response_json = create_post(request_body, user_id)
             return self.response(response_json, status.HTTP_201_SUCCESS_CREATED.value)
 

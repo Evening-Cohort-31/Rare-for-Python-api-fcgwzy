@@ -57,7 +57,6 @@ def create_user(user):
 
         return json.dumps({"token": id, "valid": True, "is_admin": 0})
 
-
 def get_all_users(query_params):
     with sqlite3.connect("./db.sqlite3") as conn:
         conn.row_factory = sqlite3.Row
@@ -74,7 +73,8 @@ def get_all_users(query_params):
                 u.bio,
                 u.created_on,
                 u.active,
-                u.is_admin
+                u.is_admin,
+                u.profile_image_url
             FROM Users u               
         """
         )
@@ -87,7 +87,6 @@ def get_all_users(query_params):
             users.append(dict(row))
 
         return json.dumps(users)
-
 
 def get_user_by_id(user_id):
     with sqlite3.connect("./db.sqlite3") as conn:
@@ -105,7 +104,8 @@ def get_user_by_id(user_id):
                 u.bio,
                 u.created_on,
                 u.active,
-                u.is_admin
+                u.is_admin,
+                u.profile_image_url
             FROM Users u
             WHERE u.id = ?
         """,
@@ -140,7 +140,7 @@ def user_is_admin(user_id):
             return False
 
         return user["is_admin"] == 1
-    
+
 
 def update_user(user_id, user_data):
     with sqlite3.connect("./db.sqlite3") as conn:
@@ -165,6 +165,23 @@ def update_user(user_id, user_data):
             WHERE id = ?
             """,
             (new_is_admin, new_active, user_id),
+        )
+
+        return db_cursor.rowcount > 0
+
+
+def update_user_avatar(user_id, user_data):
+    with sqlite3.connect("./db.sqlite3") as conn:
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
+
+        db_cursor.execute(
+            """
+            UPDATE Users
+            SET profile_image_url = ?
+            WHERE id = ?
+            """,
+            (user_data["profile_image_url"], user_id),
         )
 
         conn.commit()
