@@ -269,3 +269,49 @@ def get_posts_by_subscriptions(follower_id):
             posts.append(dict(row))
             
     return json.dumps(posts)
+
+def search_posts(search_term):
+    with sqlite3.connect("./db.sqlite3") as conn:
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
+
+        db_cursor.execute("""
+            SELECT
+                p.id,
+                p.title,
+                p.publication_date,
+                u.first_name || ' ' || u.last_name AS author
+            FROM Posts p
+            JOIN Users u ON p.user_id = u.id
+            WHERE p.title LIKE ?
+            AND p.approved = 1
+            ORDER BY p.publication_date DESC
+        """, (f'%{search_term}%',))
+
+        rows = db_cursor.fetchall()
+        return json.dumps([dict(row) for row in rows])
+    
+
+
+def search_posts_by_tag(tag_label):
+    with sqlite3.connect("./db.sqlite3") as conn:
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
+
+        db_cursor.execute("""
+            SELECT DISTINCT
+                p.id,
+                p.title,
+                p.publication_date,
+                u.first_name || ' ' || u.last_name AS author
+            FROM Posts p
+            JOIN Users u ON p.user_id = u.id
+            JOIN PostTags pt ON p.id = pt.post_id
+            JOIN Tags t ON pt.tag_id = t.id
+            WHERE LOWER(t.label) = LOWER(?)
+            AND p.approved = 1
+            ORDER BY p.publication_date DESC
+        """, (tag_label,))
+
+        rows = db_cursor.fetchall()
+        return json.dumps([dict(row) for row in rows])
