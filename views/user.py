@@ -10,7 +10,7 @@ def login_user(user):
 
         db_cursor.execute(
             """
-            select id, username, is_admin
+            select id, username, is_admin, active
             from Users
             where username = ?
             and password = ?
@@ -25,6 +25,7 @@ def login_user(user):
                 "valid": True,
                 "token": user_from_db["id"],
                 "is_admin": user_from_db["is_admin"],
+                "active": user_from_db["active"]
             }
         else:
             response = {"valid": False}
@@ -158,14 +159,16 @@ def update_user(user_id, user_data):
         db_cursor.execute(
             """
             UPDATE Users
-            SET is_admin = ?,
-            active = ?
+            SET 
+                is_admin = ?,
+                active = ?
             WHERE id = ?
             """,
             (new_is_admin, new_active, user_id),
         )
 
-        conn.commit()
+        conn.commit();
+
         return db_cursor.rowcount > 0
 
 
@@ -182,5 +185,7 @@ def update_user_avatar(user_id, user_data):
             """,
             (user_data["profile_image_url"], user_id),
         )
+
+        conn.commit()
 
         return db_cursor.rowcount > 0
