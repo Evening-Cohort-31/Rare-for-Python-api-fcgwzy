@@ -34,40 +34,61 @@ def create_post(post, user_id):
         return json.dumps({"id": new_post_id})
 
 
-def get_all_posts():
+def get_all_posts(user_id):
     with sqlite3.connect("./db.sqlite3") as conn:
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
 
-        db_cursor.execute(
-            """
-            SELECT
-                p.id,
-                p.title,
-                p.publication_date,
-                p.image_url,
-                p.content,
-                p.approved,
-                p.user_id,
-                u.first_name || ' ' || u.last_name AS author,
-                c.label AS category
-            FROM Posts p
-            JOIN Users u ON p.user_id = u.id
-            JOIN Categories c ON p.category_id = c.id
-            WHERE p.approved = 1
-            AND p.publication_date <= DATETIME('now')
-            ORDER BY p.publication_date DESC;
-            """
-        )
+        if user_is_admin(user_id):
+            db_cursor.execute(
+                """
+                SELECT
+                    p.id,
+                    p.title,
+                    p.publication_date,
+                    p.image_url,
+                    p.content,
+                    p.approved,
+                    p.user_id,
+                    u.first_name || ' ' || u.last_name AS author,
+                    c.label AS category
+                FROM Posts p
+                JOIN Users u ON p.user_id = u.id
+                JOIN Categories c ON p.category_id = c.id
+                ORDER BY p.publication_date DESC;
+                """
+            )
+        else:
+            db_cursor.execute(
+                """
+                SELECT
+                    p.id,
+                    p.title,
+                    p.publication_date,
+                    p.image_url,
+                    p.content,
+                    p.approved,
+                    p.user_id,
+                    u.first_name || ' ' || u.last_name AS author,
+                    c.label AS category
+                FROM Posts p
+                JOIN Users u ON p.user_id = u.id
+                JOIN Categories c ON p.category_id = c.id
+                WHERE p.approved = 1
+                AND p.publication_date <= DATETIME('now')
+                ORDER BY p.publication_date DESC;
+                """
+            )
 
-        # ONLY CALL THIS ONCE
+            # ONLY CALL THIS ONCE
         dataset = db_cursor.fetchall()
 
         posts = []
         for row in dataset:
             posts.append(dict(row))
-            
-    return json.dumps(posts)
+
+        return json.dumps(posts)
+
 
 def get_single_users_post(user_id):
     """Returns all posts belonging to a specific user."""
@@ -216,7 +237,7 @@ def edit_post(pk, post_data):
             or existing_post["category_id"]
         )
 
-        approved = existing_post["approved"]
+        approved = post_data.get("approved", existing_post["approved"])
         pub_date = existing_post["publication_date"]
 
         db_cursor.execute(
@@ -242,12 +263,14 @@ def edit_post(pk, post_data):
 
     return rows_affected > 0
 
+
 def get_posts_by_subscriptions(follower_id):
     with sqlite3.connect("./db.sqlite3") as conn:
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
 
-        db_cursor.execute("""
+        db_cursor.execute(
+            """
             SELECT
                 p.id,
                 p.title,
@@ -261,57 +284,118 @@ def get_posts_by_subscriptions(follower_id):
             WHERE s.follower_id = ?
             AND s.end_datetime IS NULL
             ORDER BY p.publication_date DESC
-        """, (follower_id,))
+        """,
+            (follower_id,),
+        )
 
         posts = []
         dataset = db_cursor.fetchall()
         for row in dataset:
             posts.append(dict(row))
-            
+
     return json.dumps(posts)
 
-def search_posts(search_term):
+
+def approve_post(post_id):
+    with sqlite3.connect("./db.sqlite3") as conn:
+        db_cursor = conn.cursor()
+        db_cursor.execute(
+            """
+            UPDATE Posts
+            SET approved = 1
+            WHERE id = ?
+            """,
+            (post_id,),
+        )
+        conn.commit()
+        return db_cursor.rowcount > 0
+
+
+def search_posts(search_term, user_id):
     with sqlite3.connect("./db.sqlite3") as conn:
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
 
-        db_cursor.execute("""
-            SELECT
-                p.id,
-                p.title,
-                p.publication_date,
-                u.first_name || ' ' || u.last_name AS author
-            FROM Posts p
-            JOIN Users u ON p.user_id = u.id
-            WHERE p.title LIKE ?
-            AND p.approved = 1
-            ORDER BY p.publication_date DESC
-        """, (f'%{search_term}%',))
+        if user_is_admin(user_id):
+            db_cursor.execute(
+                """
+                SELECT
+                    p.id,
+                    p.title,
+                    p.publication_date,
+                    p.approved,
+                    u.first_name || ' ' || u.last_name AS author
+                FROM Posts p
+                JOIN Users u ON p.user_id = u.id
+                WHERE p.title LIKE ?
+                ORDER BY p.publication_date DESC
+            """,
+                (f"%{search_term}%",),
+            )
+        else:
+            db_cursor.execute(
+                """
+                SELECT
+                    p.id,
+                    p.title,
+                    p.publication_date,
+                    p.approved,
+                    u.first_name || ' ' || u.last_name AS author
+                FROM Posts p
+                JOIN Users u ON p.user_id = u.id
+                WHERE p.title LIKE ?
+                AND p.approved = 1
+                ORDER BY p.publication_date DESC
+            """,
+                (f"%{search_term}%",),
+            )
 
         rows = db_cursor.fetchall()
         return json.dumps([dict(row) for row in rows])
-    
 
 
-def search_posts_by_tag(tag_label):
+def search_posts_by_tag(tag_label, user_id):
     with sqlite3.connect("./db.sqlite3") as conn:
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
 
-        db_cursor.execute("""
-            SELECT DISTINCT
-                p.id,
-                p.title,
-                p.publication_date,
-                u.first_name || ' ' || u.last_name AS author
-            FROM Posts p
-            JOIN Users u ON p.user_id = u.id
-            JOIN PostTags pt ON p.id = pt.post_id
-            JOIN Tags t ON pt.tag_id = t.id
-            WHERE LOWER(t.label) = LOWER(?)
-            AND p.approved = 1
-            ORDER BY p.publication_date DESC
-        """, (tag_label,))
+        if user_is_admin(user_id):
+            db_cursor.execute(
+                """
+                SELECT DISTINCT
+                    p.id,
+                    p.title,
+                    p.publication_date,
+                    p.approved,
+                    u.first_name || ' ' || u.last_name AS author
+                FROM Posts p
+                JOIN Users u ON p.user_id = u.id
+                JOIN PostTags pt ON p.id = pt.post_id
+                JOIN Tags t ON pt.tag_id = t.id
+                WHERE LOWER(t.label) = LOWER(?)
+                ORDER BY p.publication_date DESC
+            """,
+                (tag_label,),
+            )
+        else:
+            db_cursor.execute(
+                """
+                SELECT DISTINCT
+                    p.id,
+                    p.title,
+                    p.publication_date,
+                    p.approved,
+                    u.first_name || ' ' || u.last_name AS author
+                FROM Posts p
+                JOIN Users u ON p.user_id = u.id
+                JOIN PostTags pt ON p.id = pt.post_id
+                JOIN Tags t ON pt.tag_id = t.id
+                WHERE LOWER(t.label) = LOWER(?)
+                AND p.approved = 1
+                ORDER BY p.publication_date DESC
+            """,
+                (tag_label,),
+            )
 
         rows = db_cursor.fetchall()
         return json.dumps([dict(row) for row in rows])
