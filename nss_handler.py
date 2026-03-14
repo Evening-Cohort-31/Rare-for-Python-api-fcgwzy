@@ -1,6 +1,7 @@
 from enum import Enum
 from urllib.parse import urlparse, parse_qs
 from http.server import BaseHTTPRequestHandler
+import json
 
 
 class status(Enum):
@@ -16,7 +17,11 @@ class HandleRequests(BaseHTTPRequestHandler):
 
     def response(self, body, code):
         self.set_response_code(code)
-        self.wfile.write(body.encode())
+        if isinstance(body, (dict, list)):
+            body = json.dumps(body)
+
+        if body:
+            self.wfile.write(body.encode())
 
     def parse_url(self, path):
         """Parse the url into the resource and id"""

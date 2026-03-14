@@ -25,7 +25,7 @@ def login_user(user):
                 "valid": True,
                 "token": user_from_db["id"],
                 "is_admin": user_from_db["is_admin"],
-                "active": user_from_db["active"]
+                "active": user_from_db["active"],
             }
         else:
             response = {"valid": False}
@@ -57,6 +57,7 @@ def create_user(user):
 
         return json.dumps({"token": id, "valid": True, "is_admin": 0})
 
+
 def get_all_users(query_params):
     with sqlite3.connect("./db.sqlite3") as conn:
         conn.row_factory = sqlite3.Row
@@ -87,6 +88,7 @@ def get_all_users(query_params):
             users.append(dict(row))
 
         return json.dumps(users)
+
 
 def get_user_by_id(user_id):
     with sqlite3.connect("./db.sqlite3") as conn:
@@ -142,19 +144,47 @@ def user_is_admin(user_id):
         return user["is_admin"] == 1
 
 
+def count_admin_users():
+    with sqlite3.connect("./db.sqlite3") as conn:
+        db_cursor = conn.cursor()
+
+        db_cursor.execute(
+            """
+            SELECT COUNT(*)
+            FROM Users
+            WHERE is_admin = 1 and active = 1
+        """
+        )
+
+        return db_cursor.fetchone()[0]
+
+
 def update_user(user_id, user_data):
     with sqlite3.connect("./db.sqlite3") as conn:
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
+        admin_count = count_admin_users()
 
         db_cursor.execute("SELECT is_admin, active FROM Users WHERE id = ?", (user_id,))
         current_user = db_cursor.fetchone()
 
         if current_user is None:
             return False
-        
-        new_is_admin = user_data["is_admin"] if "is_admin" in user_data else current_user["is_admin"]
-        new_active = user_data["active"] if "active" in user_data else current_user["active"]
+
+        new_is_admin = (
+            user_data["is_admin"]
+            if "is_admin" in user_data
+            else current_user["is_admin"]
+        )
+        new_active = (
+            user_data["active"] if "active" in user_data else current_user["active"]
+        )
+
+        if current_user["is_admin"] == 1 and admin_count == 1:
+            if new_is_admin == 0 or new_active == 0:
+                return {
+                    "error": "You must assign another admin before removing or deactivating the last admin."
+                }
 
         db_cursor.execute(
             """
@@ -167,7 +197,7 @@ def update_user(user_id, user_data):
             (new_is_admin, new_active, user_id),
         )
 
-        conn.commit();
+        conn.commit()
 
         return db_cursor.rowcount > 0
 

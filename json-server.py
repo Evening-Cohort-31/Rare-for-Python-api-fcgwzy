@@ -208,6 +208,10 @@ class JSONServer(HandleRequests):
                 success = update_user_avatar(pk, request_body)
             else:
                 success = update_user(pk, request_body)
+            if isinstance(success, dict) and "error" in success:
+                return self.response(
+                    success, status.HTTP_400_CLIENT_ERROR_BAD_REQUEST_DATA.value
+                )
             if success:
                 return self.response("", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY.value)
             return self.response(
