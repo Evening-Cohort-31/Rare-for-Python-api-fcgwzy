@@ -46,7 +46,8 @@ from views import (
     get_all_reactions_for_post,
     add_reaction_to_post,
     delete_post_reaction,
-    update_reaction
+    update_reaction,
+    delete_reaction
 )
 
 
@@ -297,6 +298,14 @@ class JSONServer(HandleRequests):
                     "Resource not found",
                     status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND.value,
                 )
+            
+        elif url["requested_resource"].lower() == "reactions":            
+            if pk != 0:
+                # You'll need a delete_reaction function in your manager
+                successfully_deleted = delete_reaction(pk) 
+                if successfully_deleted:
+                    return self.response("", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY.value)
+                return self.response("Reaction not found", 404)
 
         elif url["requested_resource"].lower() == "post_reactions":
             if pk != 0:
@@ -366,7 +375,7 @@ class JSONServer(HandleRequests):
 
         if resource == "reactions":
             response_body = create_reaction(request_body)
-            return self.response(response_body, status.HTTP_201_SUCCESS_CREATED)
+            return self.response(response_body, status.HTTP_201_SUCCESS_CREATED.value)
 
         return self.response(
             "Requested resource not found",

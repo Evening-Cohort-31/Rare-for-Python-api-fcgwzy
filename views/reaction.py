@@ -11,7 +11,7 @@ def create_reaction(reaction):
         INSERT into Reactions (label, emoji) values (?, ?)
 
         """,
-            (reaction["emoji"]),
+            (reaction["label"], reaction["emoji"]),
         )
 
         id = db_cursor.lastrowid
@@ -44,7 +44,7 @@ def get_all_reactions_for_post(post_id):
 
         db_cursor.execute(
             """Select the reaction associated with a particular post
-            SELECT 
+            SELECT DISTINCT
                 pr.id,
                 pr.user_id,
                 pr.post_id,
@@ -70,18 +70,26 @@ def add_reaction_to_post(post_reaction):
 
         db_cursor.execute(
             """
-                INSERT into PostReactions (user_id, post_id, reaction_id)
+                INSERT INTO PostReactions (user_id, post_id, reaction_id)
                 VAlUES (?, ?, ?)
                 """,
-            post_reaction["user_id"],
-            post_reaction["post_id"],
-            post_reaction["reaction_id"],
+            (
+                post_reaction["user_id"],
+                post_reaction["post_id"],
+                post_reaction["reaction_id"]
+            )
         )
 
         id = db_cursor.lastrowid
         post_reaction["id"] = id
 
         return json.dumps(post_reaction)
+    
+def delete_reaction(id):
+    with sqlite3.connect("./db.sqlite3") as conn:
+        db_cursor = conn.cursor()
+        db_cursor.execute("DELETE FROM Reactions WHERE id = ?", (id,))
+        return db_cursor.rowcount > 0
 
 
 def delete_post_reaction(id):
@@ -98,24 +106,24 @@ def delete_post_reaction(id):
         rows_affected = db_cursor.rowcount
 
         return rows_affected > 0
-    
-def update_reaction(pk, updated_reaction):
-        with sqlite3.connect("./db.sqlite3") as conn:
-            conn.row_factory = sqlite3.Row
-            db_cursor = conn.cursor()
 
-            db_cursor.execute(
-                """
+
+def update_reaction(pk, updated_reaction):
+    with sqlite3.connect("./db.sqlite3") as conn:
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
+
+        db_cursor.execute(
+            """
                 UPDATE Reactions
                 SET 
-                    label = ?, 
+                    label = ?,
                     emoji = ?
                 WHERE id = ?
-                """, 
-                (updated_reaction["label"], updated_reaction["emoji"], pk)
-            )
+                """,
+            (updated_reaction["label"], updated_reaction["emoji"], pk),
+        )
 
-            rows_affected = db_cursor.rowcount
+        rows_affected = db_cursor.rowcount
 
-            return rows_affected > 0
-
+        return rows_affected > 0
