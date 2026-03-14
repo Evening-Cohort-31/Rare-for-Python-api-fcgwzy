@@ -35,4 +35,4 @@ from .comment import (
     update_comment,
     delete_comment,
 )
-from .subscription import get_all_subscriptions, create_subscription, end_subscription
+from .subscription import get_all_subscriptions, create_subscription, end_subscription, delete_subscription
