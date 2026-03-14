@@ -27,6 +27,8 @@ from .post import (
     approve_post,
     search_posts,
     search_posts_by_tag,
+    get_posts_by_category,
+
 )
 from .comment import (
     create_comment,
