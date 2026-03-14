@@ -398,4 +398,33 @@ def search_posts_by_tag(tag_label, user_id):
             )
 
         rows = db_cursor.fetchall()
-        return json.dumps([dict(row) for row in rows])
+        return json.dumps([dict(row) for row in rows]
+                          )
+    
+def get_posts_by_category(category_id):
+    with sqlite3.connect("./db.sqlite3") as conn:
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
+
+        db_cursor.execute("""
+            SELECT
+                p.id,
+                p.title,
+                p.publication_date,
+                p.content,
+                p.user_id,
+                u.username AS author,
+                c.label AS category
+            FROM Posts p
+            JOIN Users u ON p.user_id = u.id
+            JOIN Categories c ON p.category_id = c.id
+            WHERE p.category_id = ?
+            ORDER BY p.publication_date DESC
+        """, (category_id,))
+
+        posts = []
+        dataset = db_cursor.fetchall()
+        for row in dataset:
+            posts.append(dict(row))
+
+        return json.dumps(posts)
