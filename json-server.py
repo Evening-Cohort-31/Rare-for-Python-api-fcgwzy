@@ -30,6 +30,7 @@ from views import (
     get_posts_by_subscriptions,
     search_posts,
     search_posts_by_tag,
+    get_posts_by_category,
 )
 from views import (
     create_comment,
@@ -38,7 +39,7 @@ from views import (
     update_comment,
     delete_comment,
 )
-from views import create_subscription, get_all_subscriptions, end_subscription
+from views import create_subscription, get_all_subscriptions, end_subscription, delete_subscription  # ⬅️ updated
 
 from views import (
     create_reaction,
@@ -92,6 +93,11 @@ class JSONServer(HandleRequests):
                 if user_id:
                     user_id = int(user_id)
                 response_body = search_posts_by_tag(query_params["tag"], user_id)
+                return self.response(response_body, status.HTTP_200_SUCCESS.value)
+            
+            category_id = query_params.get("category_id")
+            if category_id:
+                response_body = get_posts_by_category(int(category_id[0]))
                 return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
             follower_id = query_params.get("follower_id")
@@ -161,7 +167,6 @@ class JSONServer(HandleRequests):
 
         if resource == "subscriptions":
             success = end_subscription(pk)
-
             if success:
                 return self.response("", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY.value)
             return self.response(
@@ -312,6 +317,18 @@ class JSONServer(HandleRequests):
                 if delete_post_reaction(pk):
                     return self.response("", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY)
                 return self.response("Reaction not found", 404)
+
+        elif url["requested_resource"].lower() == "subscriptions":  # ⬅️ added
+            if pk != 0:
+                successfully_deleted = delete_subscription(pk)
+                if successfully_deleted:
+                    return self.response(
+                        "", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY.value
+                    )
+                return self.response(
+                    "Resource not found",
+                    status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND.value,
+                )
 
         return self.response(
             "Resource not found",

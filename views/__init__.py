@@ -27,6 +27,8 @@ from .post import (
     approve_post,
     search_posts,
     search_posts_by_tag,
+    get_posts_by_category,
+
 )
 from .comment import (
     create_comment,
@@ -35,7 +37,7 @@ from .comment import (
     update_comment,
     delete_comment,
 )
-from .subscription import get_all_subscriptions, create_subscription, end_subscription
+from .subscription import get_all_subscriptions, create_subscription, end_subscription, delete_subscription
 
 from .reaction import (
     create_reaction,
