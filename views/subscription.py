@@ -56,3 +56,15 @@ def end_subscription(pk):
         """, (pk,))
 
         return db_cursor.rowcount > 0
+
+def delete_subscription(pk):
+    with sqlite3.connect("./db.sqlite3") as conn:
+        db_cursor = conn.cursor()
+
+        db_cursor.execute("""
+            DELETE FROM Subscriptions
+            WHERE id = ?
+        """, (pk,))
+
+        conn.commit()
+        return db_cursor.rowcount > 0

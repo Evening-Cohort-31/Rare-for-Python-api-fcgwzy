@@ -39,7 +39,7 @@ from views import (
     update_comment,
     delete_comment,
 )
-from views import create_subscription, get_all_subscriptions, end_subscription
+from views import create_subscription, get_all_subscriptions, end_subscription, delete_subscription  # ⬅️ updated
 
 
 class JSONServer(HandleRequests):
@@ -146,7 +146,6 @@ class JSONServer(HandleRequests):
 
         if resource == "subscriptions":
             success = end_subscription(pk)
-
             if success:
                 return self.response("", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY.value)
             return self.response(
@@ -263,6 +262,18 @@ class JSONServer(HandleRequests):
         elif url["requested_resource"].lower() == "comments":
             if pk != 0:
                 successfully_deleted = delete_comment(pk)
+                if successfully_deleted:
+                    return self.response(
+                        "", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY.value
+                    )
+                return self.response(
+                    "Resource not found",
+                    status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND.value,
+                )
+
+        elif url["requested_resource"].lower() == "subscriptions":  # ⬅️ added
+            if pk != 0:
+                successfully_deleted = delete_subscription(pk)
                 if successfully_deleted:
                     return self.response(
                         "", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY.value
