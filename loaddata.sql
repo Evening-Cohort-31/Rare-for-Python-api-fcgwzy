@@ -72,7 +72,7 @@ CREATE TABLE "Comments" (
 CREATE TABLE "Reactions" (
   "id" INTEGER PRIMARY KEY AUTOINCREMENT,
   "label" varchar,
-  "image_url" varchar
+  "emoji" varchar
 );
 
 CREATE TABLE "PostReactions" (
@@ -105,7 +105,7 @@ CREATE TABLE "Categories" (
 
 INSERT INTO Categories ('label') VALUES ('News');
 INSERT INTO Tags ('label') VALUES ('JavaScript');
-INSERT INTO Reactions ('label', 'image_url') VALUES ('happy', 'https://pngtree.com/so/happy');
+INSERT INTO Reactions ('label', 'emoji') VALUES ('thumbs-up', 'https://pngtree.com/freepng/smiling-emoji-face-giving-thumbs-up-gesture_21439833.html'), ('laughter', 'https://pngtree.com/freepng/laughing-emoji-with-tears_21272641.html');
 
 
 INSERT INTO "Users"
