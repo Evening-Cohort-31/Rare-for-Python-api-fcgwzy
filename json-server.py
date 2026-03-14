@@ -41,6 +41,16 @@ from views import (
 )
 from views import create_subscription, get_all_subscriptions, end_subscription, delete_subscription  # ⬅️ updated
 
+from views import (
+    create_reaction,
+    get_all_reactions,
+    get_all_reactions_for_post,
+    add_reaction_to_post,
+    delete_post_reaction,
+    update_reaction,
+    delete_reaction
+)
+
 
 class JSONServer(HandleRequests):
 
@@ -128,6 +138,17 @@ class JSONServer(HandleRequests):
             response_body = get_all_users_comments()
             return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
+        if url["requested_resource"].lower() == "reactions":
+            post_id = query_params.get("post_id") or query_params.get("postId")
+
+            if post_id:
+                response_body = get_all_reactions_for_post(post_id)
+
+            else:
+                response_body = get_all_reactions()
+
+            return self.response(response_body, status.HTTP_200_SUCCESS.value)
+
         return self.response(
             "Resource not found",
             status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND.value,
@@ -213,6 +234,22 @@ class JSONServer(HandleRequests):
                 return self.response("", 204)
             return self.response("Not Found", 404)
 
+        if resource == "reactions" and url["pk"] != 0:
+            auth_header = self.headers.get("Authorization")
+            if not auth_header:
+                return self.response("Unauthorized", 401)
+            try:
+                token = auth_header.split(" ")[1]
+                user_id = int(token)
+            except (IndexError, ValueError, TypeError):
+                return self.response("Invalid Authorization Header", 401)
+            if not user_is_admin(user_id):
+                return self.response("Forbidden: Admins only", 403)
+            success = update_reaction(url["pk"], request_body)
+            if success:
+                return self.response("", 204)
+            return self.response("Not Found", 404)
+
         return self.response(
             "Resource not found",
             status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND.value,
@@ -270,6 +307,20 @@ class JSONServer(HandleRequests):
                     "Resource not found",
                     status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND.value,
                 )
+            
+        elif url["requested_resource"].lower() == "reactions":            
+            if pk != 0:
+                # You'll need a delete_reaction function in your manager
+                successfully_deleted = delete_reaction(pk) 
+                if successfully_deleted:
+                    return self.response("", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY.value)
+                return self.response("Reaction not found", 404)
+
+        elif url["requested_resource"].lower() == "post_reactions":
+            if pk != 0:
+                if delete_post_reaction(pk):
+                    return self.response("", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY)
+                return self.response("Reaction not found", 404)
 
         elif url["requested_resource"].lower() == "subscriptions":  # ⬅️ added
             if pk != 0:
@@ -338,6 +389,14 @@ class JSONServer(HandleRequests):
         if resource == "subscriptions":
             response_json = create_subscription(request_body)
             return self.response(response_json, status.HTTP_201_SUCCESS_CREATED.value)
+
+        if resource == "post_reactions":
+            response_body = add_reaction_to_post(request_body)
+            return self.response(response_body, status.HTTP_201_SUCCESS_CREATED.value)
+
+        if resource == "reactions":
+            response_body = create_reaction(request_body)
+            return self.response(response_body, status.HTTP_201_SUCCESS_CREATED.value)
 
         return self.response(
             "Requested resource not found",

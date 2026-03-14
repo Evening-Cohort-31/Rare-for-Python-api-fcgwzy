@@ -38,3 +38,13 @@ from .comment import (
     delete_comment,
 )
 from .subscription import get_all_subscriptions, create_subscription, end_subscription, delete_subscription
+
+from .reaction import (
+    create_reaction,
+    get_all_reactions,
+    get_all_reactions_for_post,
+    add_reaction_to_post,
+    delete_post_reaction,
+    update_reaction,
+    delete_reaction
+)
