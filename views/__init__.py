@@ -49,6 +49,7 @@ from .reaction import (
     get_all_reactions,
     get_all_reactions_for_post,
     add_reaction_to_post,
+    delete_reaction,
     delete_post_reaction,
     update_reaction,
     delete_reaction,

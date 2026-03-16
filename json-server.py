@@ -53,7 +53,7 @@ from views import (
     add_reaction_to_post,
     delete_post_reaction,
     update_reaction,
-    delete_reaction
+    delete_reaction,
 )
 
 
@@ -148,7 +148,22 @@ class JSONServer(HandleRequests):
 
             if post_id:
                 response_body = get_all_reactions_for_post(post_id)
+            else:
+                response_body = get_all_reactions()
 
+            return self.response(response_body, status.HTTP_200_SUCCESS.value)
+
+        if url["requested_resource"].lower() == "postreactions":
+            post_id_param = query_params.get("post_id") or query_params.get("postId")
+
+            if post_id_param:
+                # If it's a list from query_params, grab the first index
+                pid = (
+                    post_id_param[0]
+                    if isinstance(post_id_param, list)
+                    else post_id_param
+                )
+                response_body = get_all_reactions_for_post(int(pid))
             else:
                 response_body = get_all_reactions()
 
@@ -326,16 +341,18 @@ class JSONServer(HandleRequests):
                     "Resource not found",
                     status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND.value,
                 )
-            
-        elif url["requested_resource"].lower() == "reactions":            
+
+        elif url["requested_resource"].lower() == "reactions":
             if pk != 0:
                 # You'll need a delete_reaction function in your manager
-                successfully_deleted = delete_reaction(pk) 
+                successfully_deleted = delete_reaction(pk)
                 if successfully_deleted:
-                    return self.response("", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY.value)
+                    return self.response(
+                        "", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY.value
+                    )
                 return self.response("Reaction not found", 404)
 
-        elif url["requested_resource"].lower() == "post_reactions":
+        elif url["requested_resource"].lower() == "postreactions":
             if pk != 0:
                 if delete_post_reaction(pk):
                     return self.response("", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY)
@@ -376,10 +393,10 @@ class JSONServer(HandleRequests):
             authenticated_user = login_user(request_body)
             if authenticated_user:
                 return self.response(authenticated_user, status.HTTP_200_SUCCESS.value)
-            else:
-                return self.response(
-                    "Invalid email", status.HTTP_400_CLIENT_ERROR_BAD_REQUEST_DATA.value
-                )
+
+            return self.response(
+                "Invalid email", status.HTTP_400_CLIENT_ERROR_BAD_REQUEST_DATA.value
+            )
 
         if resource == "categories":
             response_json = create_category(request_body)
@@ -409,7 +426,20 @@ class JSONServer(HandleRequests):
             response_json = create_subscription(request_body)
             return self.response(response_json, status.HTTP_201_SUCCESS_CREATED.value)
 
-        if resource == "post_reactions":
+        if resource == "postreactions":
+            auth_header = self.headers.get("Authorization")
+            if not auth_header:
+                return self.response("Unauthorized", 401)
+
+            try:
+                token = auth_header.split(" ")[1]
+                user_id = int(token)
+            except (IndexError, ValueError, TypeError):
+                return self.response("Invalid Token", 401)
+            
+            print(f"DEBUG: User {user_id} is reacting to post {request_body['post_id']}")
+
+            request_body["user_id"] = user_id
             response_body = add_reaction_to_post(request_body)
             return self.response(response_body, status.HTTP_201_SUCCESS_CREATED.value)
 
