@@ -6,6 +6,7 @@ from .user import (
     update_user,
     update_user_avatar,
     user_is_admin,
+    process_admin_demotion,
 )
 from .category import (
     create_category,
@@ -51,4 +52,5 @@ from .reaction import (
     delete_reaction,
     delete_post_reaction,
     update_reaction,
+    delete_reaction,
 )

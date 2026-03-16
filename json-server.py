@@ -222,18 +222,32 @@ class JSONServer(HandleRequests):
             return self.response("", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY.value)
 
         if resource == "users" and pk != 0:
+
+            auth_header = self.headers.get("Authorization")
+            if not auth_header:
+                return self.response("Unauthorized", 401)
+            try:
+                token = auth_header.split(" ")[1]
+                requested_by = int(token)
+            except (IndexError, ValueError, TypeError):
+                return self.response("Invalid Authorization Header", 401)
+
             if "active" in request_body or "is_admin" in request_body:
-                success = update_user(pk, request_body)
+                success = update_user(pk, request_body, requested_by)
             elif "profile_image_url" in request_body:
                 success = update_user_avatar(pk, request_body)
             else:
-                success = update_user(pk, request_body)
-            if isinstance(success, dict) and "error" in success:
-                return self.response(
-                    success, status.HTTP_400_CLIENT_ERROR_BAD_REQUEST_DATA.value
-                )
+                success = update_user(pk, request_body, requested_by)
+            if isinstance(success, dict):
+                if "error" in success:
+                    return self.response(
+                        success, status.HTTP_400_CLIENT_ERROR_BAD_REQUEST_DATA.value
+                    )
+                return self.response(success, status.HTTP_200_SUCCESS.value)
+
             if success:
                 return self.response("", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY.value)
+
             return self.response(
                 "User not found", status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND.value
             )
