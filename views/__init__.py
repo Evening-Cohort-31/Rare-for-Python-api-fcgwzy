@@ -6,6 +6,7 @@ from .user import (
     update_user,
     update_user_avatar,
     user_is_admin,
+    process_admin_demotion,
 )
 from .category import (
     create_category,
@@ -28,7 +29,6 @@ from .post import (
     search_posts,
     search_posts_by_tag,
     get_posts_by_category,
-
 )
 from .comment import (
     create_comment,
@@ -37,4 +37,9 @@ from .comment import (
     update_comment,
     delete_comment,
 )
-from .subscription import get_all_subscriptions, create_subscription, end_subscription, delete_subscription
+from .subscription import (
+    get_all_subscriptions,
+    create_subscription,
+    end_subscription,
+    delete_subscription,
+)

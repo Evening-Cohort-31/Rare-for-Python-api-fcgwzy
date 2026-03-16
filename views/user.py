@@ -159,7 +159,60 @@ def count_admin_users():
         return db_cursor.fetchone()[0]
 
 
-def update_user(user_id, user_data):
+def process_admin_demotion(admin_id, action, approver_id):
+    with sqlite3.connect("./db.sqlite3") as conn:
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
+
+        db_cursor.execute(
+            """
+            SELECT * FROM DemotionQueue
+            WHERE admin_id = ? and action = ?
+        """,
+            (admin_id, action),
+        )
+
+        pending = db_cursor.fetchone()
+
+        if pending is None:
+            db_cursor.execute(
+                """
+                INSERT INTO DemotionQueue (action, admin_id, approver_one_id)
+                VALUES (?, ?, ?)
+            """,
+                (action, admin_id, approver_id),
+            )
+
+            conn.commit()
+
+            return {
+                "pending": True,
+                "message": "First admin approved, pending second admin approval.",
+            }
+
+        if pending["approver_one_id"] == approver_id:
+            return {"error": "You have already given approval."}
+
+        if action == "deactivate":
+            db_cursor.execute("UPDATE Users SET active = 0 WHERE id = ?", (admin_id,))
+
+        if action == "demote":
+            db_cursor.execute("UPDATE Users SET is_admin = 0 WHERE id = ?", (admin_id,))
+
+        db_cursor.execute(
+            """
+            DELETE FROM DemotionQueue
+            WHERE admin_id = ? and action = ?
+        """,
+            (admin_id, action),
+        )
+
+        conn.commit()
+
+        return {"message": "Second admin approval. Action completed."}
+
+
+def update_user(user_id, user_data, requested_by):
     with sqlite3.connect("./db.sqlite3") as conn:
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
@@ -169,22 +222,120 @@ def update_user(user_id, user_data):
         current_user = db_cursor.fetchone()
 
         if current_user is None:
-            return False
+            return {"error": "User not found"}
 
-        new_is_admin = (
-            user_data["is_admin"]
-            if "is_admin" in user_data
-            else current_user["is_admin"]
-        )
-        new_active = (
-            user_data["active"] if "active" in user_data else current_user["active"]
-        )
+        new_is_admin = user_data.get("is_admin", current_user["is_admin"])
+
+        new_active = user_data.get("active", current_user["active"])
 
         if current_user["is_admin"] == 1 and admin_count == 1:
             if new_is_admin == 0 or new_active == 0:
                 return {
                     "error": "You must assign another admin before removing or deactivating the last admin."
                 }
+
+        if current_user["is_admin"] == 0 and new_is_admin == 1:
+            action = "promote"
+
+            db_cursor.execute(
+                """
+            SELECT * FROM DemotionQueue
+            WHERE admin_id = ? AND action = ?
+            """,
+                (user_id, action),
+            )
+
+            pending = db_cursor.fetchone()
+
+            if pending is None:
+                db_cursor.execute(
+                    """
+                    INSERT INTO DemotionQueue (action, admin_id, approver_one_id)
+                    VALUES (?, ?, ?)
+                    """,
+                    (action, user_id, requested_by),
+                )
+
+                conn.commit()
+
+                return {
+                    "pending": True,
+                    "message": "First admin approved, pending second admin approval.",
+                }
+            if pending["approver_one_id"] == requested_by:
+                return {"error": "You have already approved this action."}
+
+            db_cursor.execute(
+                "UPDATE Users SET is_admin = 1 WHERE id = ?",
+                (user_id,),
+            )
+
+            db_cursor.execute(
+                """
+                DELETE FROM DemotionQueue
+                WHERE admin_id = ? AND action = ?
+                """,
+                (user_id, action),
+            )
+
+            conn.commit()
+
+            return {"message": "Second admin approval, action completed."}
+
+        if current_user["is_admin"] == 1:
+            if new_active == 0:
+                action = "deactivate"
+            elif new_is_admin == 0:
+                action = "demote"
+            else:
+                action = None
+
+            if action:
+                db_cursor.execute(
+                    """
+                    SELECT * FROM DemotionQueue
+                                  WHERE admin_id = ? AND action = ?
+                """,
+                    (user_id, action),
+                )
+                pending = db_cursor.fetchone()
+
+                if pending is None:
+                    db_cursor.execute(
+                        """
+                        INSERT INTO DemotionQueue (action, admin_id, approver_one_id)
+                        VALUES (?, ?, ?)
+                    """,
+                        (action, user_id, requested_by),
+                    )
+                    conn.commit()
+                    return {
+                        "pending": True,
+                        "message": "First admin approved, pending second admin approval.",
+                    }
+
+                if pending["approver_one_id"] == requested_by:
+                    return {"error": "You have already approved this action."}
+
+                if action == "deactivate":
+                    db_cursor.execute(
+                        "UPDATE Users SET active = 0 WHERE id = ?", (user_id,)
+                    )
+                elif action == "demote":
+                    db_cursor.execute(
+                        "UPDATE Users SET is_admin = 0 WHERE id = ?", (user_id,)
+                    )
+
+                db_cursor.execute(
+                    """
+                    DELETE FROM DemotionQueue
+                    WHERE admin_id = ? AND action = ?
+                """,
+                    (user_id, action),
+                )
+
+                conn.commit()
+                return {"message": "Second admin approval, action completed."}
 
         db_cursor.execute(
             """
