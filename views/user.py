@@ -228,20 +228,6 @@ def update_user(user_id, user_data, requested_by):
 
         new_active = user_data.get("active", current_user["active"])
 
-        if admin_count == 1:
-            db_cursor.execute(
-                """
-                UPDATE Users
-                SET is_admin = ?, active = ?
-                WHERE id = ?
-            """,
-                (new_is_admin, new_active, user_id),
-            )
-
-            conn.commit()
-
-            return True
-
         if current_user["is_admin"] == 1 and admin_count == 1:
             if new_is_admin == 0 or new_active == 0:
                 return {
@@ -250,6 +236,20 @@ def update_user(user_id, user_data, requested_by):
 
         if current_user["is_admin"] == 0 and new_is_admin == 1:
             action = "promote"
+
+            if admin_count == 1:
+                db_cursor.execute(
+                    """
+                    UPDATE Users
+                    SET is_admin = ?, active = ?
+                    WHERE id = ?
+                """,
+                    (new_is_admin, new_active, user_id),
+                )
+
+                conn.commit()
+
+                return True
 
             db_cursor.execute(
                 """
